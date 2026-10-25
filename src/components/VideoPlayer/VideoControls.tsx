@@ -1,4 +1,4 @@
-import { FC, useState, MouseEvent } from "react";
+import { FC, useState, MouseEvent, SyntheticEvent } from "react";
 import {
   Box,
   IconButton,
@@ -48,9 +48,9 @@ export interface VideoControlsProps {
   onTogglePlay: () => void;
   onRestart: () => void;
   onSkip: (delta: number) => void;
-  onSeekChange: (e: any, value: number | number[]) => void;
-  onSeekCommitted: (e: any, value: number | number[]) => void;
-  onVolumeChange: (e: any, value: number | number[]) => void;
+  onSeekChange: (e: Event | SyntheticEvent, value: number | number[]) => void;
+  onSeekCommitted: (e: Event | SyntheticEvent, value: number | number[]) => void;
+  onVolumeChange: (e: Event | SyntheticEvent, value: number | number[]) => void;
   onToggleMute: () => void;
   onSpeedSelect: (rate: number) => void;
   onToggleFullscreen: () => void;

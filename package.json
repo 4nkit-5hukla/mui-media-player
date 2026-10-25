@@ -32,12 +32,12 @@
     "audio-player",
     "typescript"
   ],
-  "author": "Ankit Shukla <shobhit@easysocial.io>",
+  "author": "Ankit Shukla <4nkit5hukla@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/ankit-shukla/mui-media-player",
+  "homepage": "https://github.com/4nkit-5hukla/mui-media-player",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ankit-shukla/mui-media-player"
+    "url": "https://github.com/4nkit-5hukla/mui-media-player"
   },
   "bugs": {
     "url": "https://github.com/ankit-shukla/mui-media-player/issues"

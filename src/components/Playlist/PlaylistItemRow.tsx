@@ -10,7 +10,6 @@ import {
   Box,
 } from "@mui/material";
 import {
-  PlayArrowRounded,
   DeleteOutlineRounded,
   MusicNoteRounded,
   VideocamRounded,

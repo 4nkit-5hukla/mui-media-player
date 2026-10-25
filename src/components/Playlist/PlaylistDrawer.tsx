@@ -23,7 +23,6 @@ import {
 } from "@mui/icons-material";
 
 import { usePlaylistContext } from "../../context/PlaylistContext";
-import { PlaylistItem } from "../../types/playlist";
 import { PlaylistItemRow } from "./PlaylistItemRow";
 
 export interface PlaylistDrawerProps {
@@ -135,6 +134,7 @@ export const PlaylistDrawer: FC<PlaylistDrawerProps> = ({
       {tabIndex === 0 && (
         <TextField
           size="small"
+          fullWidth
           placeholder="Filter playlist..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

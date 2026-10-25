@@ -1,4 +1,4 @@
-import { CSSProperties, ReactNode, SyntheticEvent } from "react";
+import { CSSProperties, SyntheticEvent } from "react";
 import { SxProps, Theme } from "@mui/material";
 
 export type MediaType = "video" | "audio" | "youtube" | "auto";

@@ -7,7 +7,6 @@ import {
   Menu,
   MenuItem,
   CircularProgress,
-  Badge,
 } from "@mui/material";
 import {
   PlayArrowRounded,
@@ -83,7 +82,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 }) => {
   const playlistCtx = usePlaylistContext();
   const activePlaylist = explicitPlaylist || playlistCtx?.items;
-  const hasPlaylist = Boolean(activePlaylist && activePlaylist.length > 0);
+  const hasPlaylist = Boolean((activePlaylist && activePlaylist.length > 0) || showPlaylistControls);
 
   const nextTrack = explicitOnNext || playlistCtx?.next;
   const prevTrack = explicitOnPrev || playlistCtx?.prev;
@@ -92,7 +91,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
   const [speedAnchorEl, setSpeedAnchorEl] = useState<null | HTMLElement>(null);
 
-  const controller = useMediaController({
+  const controller = useMediaController<HTMLAudioElement>({
     autoPlay,
     muted,
     defaultVolume,
@@ -159,7 +158,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   // Hidden audio element
   const audioElement = (
     <audio
-      ref={mediaRef as any}
+      ref={mediaRef}
       src={src}
       loop={loop}
       preload={preload}

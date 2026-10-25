@@ -305,7 +305,7 @@ export const App: FC = () => {
                     <RadioGroup
                       row
                       value={mediaSelection}
-                      onChange={(e) => setMediaSelection(e.target.value as any)}
+                      onChange={(e) => setMediaSelection(e.target.value as "video" | "audio" | "youtube")}
                     >
                       <FormControlLabel value="video" control={<Radio size="small" />} label="MP4 Video File (.mp4)" />
                       <FormControlLabel value="audio" control={<Radio size="small" />} label="MP3 Audio File (.mp3)" />

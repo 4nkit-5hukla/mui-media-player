@@ -1,5 +1,6 @@
 import { styled, alpha } from "@mui/material/styles";
 import { Box, Slider, Typography, Button, IconButton } from "@mui/material";
+import { resolveAccentColor } from "../../utils/theme";
 
 export const VideoContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== "aspectRatio" && prop !== "isFullscreen",
@@ -86,10 +87,7 @@ export const CenterOverlay = styled(Box)({
 export const CenterPlayButton = styled(IconButton, {
   shouldForwardProp: (prop) => prop !== "accentColor",
 })<{ accentColor?: string }>(({ theme, accentColor }) => {
-  const color =
-    accentColor && (theme.palette as any)[accentColor]?.main
-      ? (theme.palette as any)[accentColor].main
-      : theme.palette.primary.main;
+  const color = resolveAccentColor(theme, accentColor);
 
   return {
     pointerEvents: "auto",

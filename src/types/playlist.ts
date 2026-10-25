@@ -20,7 +20,7 @@ export interface PlaylistItem {
   /** Known duration in seconds (optional) */
   duration?: number;
   /** Extra arbitrary metadata */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface PlaylistContextValue {

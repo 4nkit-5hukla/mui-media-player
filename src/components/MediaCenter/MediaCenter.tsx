@@ -33,7 +33,7 @@ import { PlaylistItemRow } from "../Playlist/PlaylistItemRow";
 import { MediaCenterProps } from "./types";
 
 const SlideUp = forwardRef(function Transition(
-  props: TransitionProps & { children: ReactElement<any, any> },
+  props: TransitionProps & { children: ReactElement },
   ref: Ref<unknown>
 ) {
   return <Slide direction="up" ref={ref} {...props} />;

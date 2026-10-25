@@ -1,4 +1,4 @@
-import { FC, useEffect, useRef } from "react";
+import { FC, useEffect } from "react";
 import {
   Box,
   CircularProgress,
@@ -78,7 +78,7 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
   const hasNext = playlistCtx ? playlistCtx.hasNext : false;
   const hasPrev = playlistCtx ? playlistCtx.hasPrev : false;
 
-  const controller = useMediaController({
+  const controller = useMediaController<HTMLVideoElement>({
     autoPlay,
     muted,
     defaultVolume,
@@ -202,7 +202,7 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
     >
       {/* HTML5 Video Element */}
       <VideoElement
-        ref={mediaRef as any}
+        ref={mediaRef}
         src={src}
         poster={poster}
         loop={loop}

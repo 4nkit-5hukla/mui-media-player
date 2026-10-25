@@ -21,7 +21,9 @@ export interface UseMediaControllerOptions extends BasePlayerProps {
   hideControlsTimeout?: number;
 }
 
-export function useMediaController(options: UseMediaControllerOptions = {}) {
+export function useMediaController<T extends HTMLMediaElement = HTMLMediaElement>(
+  options: UseMediaControllerOptions = {}
+) {
   const {
     autoPlay = false,
     defaultVolume = 1,
@@ -38,7 +40,7 @@ export function useMediaController(options: UseMediaControllerOptions = {}) {
     onError,
   } = options;
 
-  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement | null>(null);
+  const mediaRef = useRef<T | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 

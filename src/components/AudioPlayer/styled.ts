@@ -1,5 +1,5 @@
 import { styled, alpha } from "@mui/material/styles";
-import { Paper, Box, Slider, Typography, Avatar } from "@mui/material";
+import { Paper, Slider, Typography, Avatar } from "@mui/material";
 
 export const AudioCardContainer = styled(Paper)(({ theme }) => ({
   position: "relative",

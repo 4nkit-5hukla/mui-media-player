@@ -1,6 +1,7 @@
 import { FC } from "react";
 import { Box, keyframes } from "@mui/material";
-import { styled, alpha } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
+import { resolveAccentColor } from "../../utils/theme";
 
 const waveAnimation = keyframes`
   0%, 100% {
@@ -22,10 +23,7 @@ const WaveContainer = styled(Box)({
 const WaveBar = styled("span", {
   shouldForwardProp: (prop) => prop !== "isPlaying" && prop !== "delay" && prop !== "accentColor",
 })<{ isPlaying: boolean; delay: number; accentColor?: string }>(({ theme, isPlaying, delay, accentColor }) => {
-  const color =
-    accentColor && (theme.palette as any)[accentColor]?.main
-      ? (theme.palette as any)[accentColor].main
-      : theme.palette.primary.main;
+  const color = resolveAccentColor(theme, accentColor);
 
   return {
     display: "inline-block",

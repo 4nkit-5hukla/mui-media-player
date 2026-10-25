@@ -74,7 +74,7 @@ export const MediaBar: FC<MediaBarProps> = ({
   const activeArtist = currentItem?.artist || explicitArtist || (currentItem?.album ? currentItem.album : "");
   const activeArtwork = currentItem?.artwork || currentItem?.poster || explicitArtwork;
 
-  const controller = useMediaController({
+  const controller = useMediaController<HTMLAudioElement>({
     autoPlay,
     muted,
     defaultVolume,
@@ -136,7 +136,7 @@ export const MediaBar: FC<MediaBarProps> = ({
       >
         {/* Hidden media element */}
         <audio
-          ref={mediaRef as any}
+          ref={mediaRef}
           src={activeSrc}
           loop={loop}
           preload={preload}
