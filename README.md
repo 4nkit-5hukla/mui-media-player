@@ -3,10 +3,14 @@
 > A production-grade, highly customizable media player library for **React** and **MUI (Material UI)** with `VideoPlayer`, `AudioPlayer`, `MediaPlayer` (format auto-detection), `MediaBar`, `MediaCenter`, and comprehensive playlist management.
 
 [![npm version](https://img.shields.io/npm/v/mui-media-player.svg)](https://www.npmjs.com/package/mui-media-player)
+[![CI](https://github.com/4nkit-5hukla/mui-media-player/actions/workflows/ci.yml/badge.svg)](https://github.com/4nkit-5hukla/mui-media-player/actions/workflows/ci.yml)
+[![Storybook](https://img.shields.io/badge/Storybook-Live_Docs-ff4785.svg)](https://4nkit-5hukla.github.io/mui-media-player/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18%20%7C%2019-61dafb.svg)](https://react.dev/)
 [![MUI](https://img.shields.io/badge/MUI-v5%20%7C%20v6%20%7C%20v7%20%7C%20v9-007fff.svg)](https://mui.com/)
+
+📖 **[View Live Interactive Storybook Documentation](https://4nkit-5hukla.github.io/mui-media-player/)**
 
 ---
 
@@ -49,7 +53,7 @@ import { VideoPlayer } from "mui-media-player";
 export default function VideoDemo() {
   return (
     <VideoPlayer
-      src="https://www.w3schools.com/html/mov_bbb.mp4"
+      src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
       title="Big Buck Bunny"
       subtitle="Blender Foundation • 4K Open Movie"
       poster="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d"
@@ -84,7 +88,7 @@ export default function AudioDemo() {
 ```tsx
 import { MediaPlayer } from "mui-media-player";
 
-// Automatically detects whether URL is audio or video:
+// Automatically detects whether URL is audio, video, or YouTube:
 export default function UniversalMediaDemo() {
   return (
     <>
@@ -101,51 +105,41 @@ export default function UniversalMediaDemo() {
 }
 ```
 
-### 4. MediaBar (Docked or Floating Bottom Player)
+### 4. MediaBar (Docked or Floating Player)
 ```tsx
 import { MediaBar, PlaylistProvider } from "mui-media-player";
 
 export default function App() {
   return (
-    <PlaylistProvider playlist={tracks}>
-      <main>Your App Content</main>
-      
-      {/* Docked bottom audio/media bar */}
-      <MediaBar
-        position="bottom" // 'bottom' | 'floating' | 'top'
-        onExpand={() => setMediaCenterOpen(true)}
-      />
+    <PlaylistProvider initialItems={tracks}>
+      <YourContent />
+      {/* Persistent floating pill bar */}
+      <MediaBar position="floating" accentColor="primary" />
     </PlaylistProvider>
   );
 }
 ```
 
-### 5. MediaCenter (Workstation / Lightbox)
+### 5. MediaCenter (Workstation or Modal Lightbox)
 ```tsx
 import { useState } from "react";
-import { MediaCenter } from "mui-media-player";
+import { MediaCenter, Button } from "mui-media-player";
 
-export default function MediaCenterDemo() {
+export default function MediaHub() {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button onClick={() => setOpen(true)}>Open Media Center</button>
+      <Button variant="contained" onClick={() => setOpen(true)}>
+        Open Media Center Lightbox
+      </Button>
 
-      {/* Modal Dialog Lightbox */}
       <MediaCenter
         mode="modal"
         open={open}
         onClose={() => setOpen(false)}
-        title="Creator Media Hub"
-        playlist={myPlaylist}
-      />
-
-      {/* Or Embedded In-Page Workstation */}
-      <MediaCenter
-        mode="embedded"
-        title="Dashboard Player"
-        playlist={myPlaylist}
+        playlist={tracks}
+        accentColor="primary"
       />
     </>
   );
@@ -154,54 +148,31 @@ export default function MediaCenterDemo() {
 
 ---
 
-## ⌨️ Keyboard Navigation
+## 📚 Storybook Documentation
 
-When focused on the player:
-| Key | Action |
-| --- | --- |
-| `Space` or `K` | Toggle Play / Pause |
-| `F` | Toggle Fullscreen |
-| `M` | Toggle Mute |
-| `P` | Toggle Picture-in-Picture (PiP) |
-| `←` / `→` | Skip backward / forward 5 seconds |
-| `J` / `L` | Skip backward / forward 10 seconds |
-| `↑` / `↓` | Increase / decrease volume by 10% |
-| `0` or `Home` | Restart playback from beginning |
+Explore interactive stories, controls, and use cases in the hosted Storybook:
+👉 **[https://4nkit-5hukla.github.io/mui-media-player/](https://4nkit-5hukla.github.io/mui-media-player/)**
 
----
-
-## 🛠️ Local Development & Playground
-
-To launch the live interactive playground on `localhost`:
-
+To run Storybook locally:
 ```bash
-cd plugins/mui-media-player
-npm install
-npm run dev
+npm run storybook
 ```
 
-Visit `http://localhost:5174/` or `http://localhost:5175/` in your browser.
-
-### Scripts
-- `npm run dev`: Launch the interactive development playground.
-- `npm run build`: Run typecheck, unit tests, and Vite bundle for npm distribution.
-- `npm run lint`: Run TypeScript type-checking without emitting code.
-- `npm run test`: Run the Vitest test suite.
-- `npm run coverage`: Generate unit test code coverage report.
+To build static Storybook:
+```bash
+npm run build-storybook
+```
 
 ---
 
-## 🗺️ Multi-Framework Roadmap
+## 🤖 CI / CD Workflows
 
-The underlying playback controller is implemented headlessly (`useMediaController` / core media state engine). Future updates will expose wrappers for:
-- [x] React (18 & 19)
-- [ ] Vanilla JavaScript (`@mui-media-player/core`)
-- [ ] Vue 3
-- [ ] Svelte
-- [ ] Angular
+- **`.github/workflows/ci.yml`**: Matrix builds across Node 18.x, 20.x, and 22.x running type checks, Vitest test suites, library build, and Storybook build.
+- **`.github/workflows/deploy-storybook.yml`**: Automatically builds and publishes Storybook to GitHub Pages on every push to `main`.
+- **`.github/workflows/publish-npm.yml`**: Automates verification, build, and publishing to npm upon new release tags (`v*.*.*`) or manual workflow dispatch.
 
 ---
 
 ## 📄 License
 
-MIT © [Ankit Shukla](https://github.com/ankit-shukla)
+MIT © [Ankit Shukla](https://github.com/4nkit-5hukla)
