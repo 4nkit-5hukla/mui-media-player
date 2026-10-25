@@ -11,12 +11,21 @@ const isLibBuild =
 export default defineConfig({
   plugins: [
     react(),
-    dts({
-      insertTypesEntry: true,
-      rollupTypes: true,
-      include: ["src"],
-      exclude: ["src/demo/**/*", "src/**/*.test.tsx", "src/**/*.test.ts"],
-    }),
+    ...(isLibBuild
+      ? [
+          dts({
+            insertTypesEntry: true,
+            rollupTypes: true,
+            include: ["src"],
+            exclude: [
+              "src/demo/**/*",
+              "src/**/*.stories.tsx",
+              "src/**/*.test.tsx",
+              "src/**/*.test.ts",
+            ],
+          }),
+        ]
+      : []),
   ],
   resolve: {
     alias: {
@@ -60,8 +69,11 @@ export default defineConfig({
             },
           },
         },
+        sourcemap: true,
+        emptyOutDir: true,
       }
     : {
         outDir: "dist-demo",
+        sourcemap: true,
       },
 });
