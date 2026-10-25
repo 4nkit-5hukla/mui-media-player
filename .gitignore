@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-demo/
+storybook-static/
 coverage/
 .DS_Store
 *.log
