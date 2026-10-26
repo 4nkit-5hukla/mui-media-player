@@ -1,4 +1,4 @@
-import { FC, useState, MouseEvent, SyntheticEvent } from "react";
+import React, { FC, useState, MouseEvent, SyntheticEvent } from "react";
 import {
   Box,
   IconButton,
@@ -6,6 +6,8 @@ import {
   Typography,
   Menu,
   MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import {
   PlayArrowRounded,
@@ -23,10 +25,15 @@ import {
   SkipPreviousRounded,
   SkipNextRounded,
   QueueMusicRounded,
+  SubtitlesRounded,
+  SubtitlesOffRounded,
+  AudiotrackRounded,
+  CheckRounded,
 } from "@mui/icons-material";
 
 import { formatTime } from "../../utils/formatTime";
 import { MediaControllerState } from "../../types/player";
+import { SubtitleTrack, AudioTrackOption } from "../../types/tracks";
 import {
   BottomOverlay,
   SeekSlider,
@@ -45,6 +52,12 @@ export interface VideoControlsProps {
   hasNext?: boolean;
   hasPrev?: boolean;
   showPlaylistControls?: boolean;
+  subtitles?: SubtitleTrack[];
+  activeSubtitleId?: string | null;
+  onSubtitleChange?: (subtitleId: string | null) => void;
+  audioTracks?: AudioTrackOption[];
+  activeAudioTrackId?: string | null;
+  onAudioTrackChange?: (audioTrackId: string) => void;
   onTogglePlay: () => void;
   onRestart: () => void;
   onSkip: (delta: number) => void;
@@ -68,11 +81,18 @@ export const VideoControls: FC<VideoControlsProps> = ({
   visible,
   containerEl,
   speedOptions = DEFAULT_SPEEDS,
+  accentColor,
   disablePiP = false,
   disableFullscreen = false,
   hasNext = false,
   hasPrev = false,
   showPlaylistControls = false,
+  subtitles,
+  activeSubtitleId,
+  onSubtitleChange,
+  audioTracks,
+  activeAudioTrackId,
+  onAudioTrackChange,
   onTogglePlay,
   onRestart,
   onSkip,
@@ -89,6 +109,12 @@ export const VideoControls: FC<VideoControlsProps> = ({
   extraControls,
 }) => {
   const [speedAnchorEl, setSpeedAnchorEl] = useState<null | HTMLElement>(null);
+  const [subtitlesAnchorEl, setSubtitlesAnchorEl] = useState<null | HTMLElement>(null);
+  const [audioTrackAnchorEl, setAudioTrackAnchorEl] = useState<null | HTMLElement>(null);
+
+  const hasSubtitles = subtitles && subtitles.length > 0;
+  const isSubtitleActive = Boolean(activeSubtitleId);
+  const hasMultipleAudioTracks = audioTracks && audioTracks.length > 1;
 
   const renderVolumeIcon = () => {
     if (state.isMuted || state.volume === 0) {
@@ -101,6 +127,27 @@ export const VideoControls: FC<VideoControlsProps> = ({
       return <VolumeDownRounded fontSize="small" />;
     }
     return <VolumeUpRounded fontSize="small" />;
+  };
+
+  const menuPaperProps = {
+    sx: {
+      backgroundColor: "rgba(28, 28, 34, 0.95)",
+      backdropFilter: "blur(12px)",
+      color: "#ffffff",
+      border: "1px solid rgba(255, 255, 255, 0.12)",
+      minWidth: 140,
+      zIndex: 1400,
+      "& .MuiMenuItem-root": {
+        fontSize: "0.82rem",
+        "&.Mui-selected": {
+          backgroundColor: "rgba(255, 255, 255, 0.18)",
+          fontWeight: 700,
+        },
+        "&:hover": {
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+        },
+      },
+    },
   };
 
   return (
@@ -262,8 +309,127 @@ export const VideoControls: FC<VideoControlsProps> = ({
         </Box>
 
         {/* Right Controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
           {extraControls}
+
+          {/* Subtitles / Closed Captions Toggle and Menu */}
+          {hasSubtitles && (
+            <>
+              <Tooltip
+                title={isSubtitleActive ? "Subtitles (On)" : "Subtitles (Off)"}
+                PopperProps={{ container: containerEl }}
+              >
+                <IconButton
+                  size="small"
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => setSubtitlesAnchorEl(e.currentTarget)}
+                  aria-label="subtitles"
+                  sx={{
+                    color: isSubtitleActive ? (accentColor === "secondary" ? "#a855f7" : "#38bdf8") : "#ffffff",
+                    position: "relative",
+                  }}
+                >
+                  {isSubtitleActive ? <SubtitlesRounded fontSize="small" /> : <SubtitlesOffRounded fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+
+              <Menu
+                container={containerEl}
+                anchorEl={subtitlesAnchorEl}
+                open={Boolean(subtitlesAnchorEl)}
+                onClose={() => setSubtitlesAnchorEl(null)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+                slotProps={{ paper: menuPaperProps.sx }}
+              >
+                <MenuItem
+                  selected={!activeSubtitleId}
+                  onClick={() => {
+                    onSubtitleChange && onSubtitleChange(null);
+                    setSubtitlesAnchorEl(null);
+                  }}
+                >
+                  {!activeSubtitleId && (
+                    <ListItemIcon sx={{ minWidth: 28, color: "inherit" }}>
+                      <CheckRounded fontSize="small" />
+                    </ListItemIcon>
+                  )}
+                  <ListItemText inset={Boolean(activeSubtitleId)}>Off</ListItemText>
+                </MenuItem>
+
+                {subtitles.map((sub) => {
+                  const isSelected = activeSubtitleId === sub.id;
+                  return (
+                    <MenuItem
+                      key={sub.id}
+                      selected={isSelected}
+                      onClick={() => {
+                        onSubtitleChange && onSubtitleChange(sub.id);
+                        setSubtitlesAnchorEl(null);
+                      }}
+                    >
+                      {isSelected && (
+                        <ListItemIcon sx={{ minWidth: 28, color: "inherit" }}>
+                          <CheckRounded fontSize="small" />
+                        </ListItemIcon>
+                      )}
+                      <ListItemText inset={!isSelected}>
+                        {sub.label} {sub.language ? `(${sub.language.toUpperCase()})` : ""}
+                      </ListItemText>
+                    </MenuItem>
+                  );
+                })}
+              </Menu>
+            </>
+          )}
+
+          {/* Multi-Audio Track Selector */}
+          {hasMultipleAudioTracks && (
+            <>
+              <Tooltip title="Audio Tracks" PopperProps={{ container: containerEl }}>
+                <IconButton
+                  size="small"
+                  onClick={(e: MouseEvent<HTMLButtonElement>) => setAudioTrackAnchorEl(e.currentTarget)}
+                  aria-label="audio tracks"
+                  sx={{ color: "#ffffff" }}
+                >
+                  <AudiotrackRounded fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              <Menu
+                container={containerEl}
+                anchorEl={audioTrackAnchorEl}
+                open={Boolean(audioTrackAnchorEl)}
+                onClose={() => setAudioTrackAnchorEl(null)}
+                anchorOrigin={{ vertical: "top", horizontal: "center" }}
+                transformOrigin={{ vertical: "bottom", horizontal: "center" }}
+                slotProps={{ paper: menuPaperProps.sx }}
+              >
+                {audioTracks.map((track) => {
+                  const isSelected = activeAudioTrackId === track.id;
+                  return (
+                    <MenuItem
+                      key={track.id}
+                      selected={isSelected}
+                      onClick={() => {
+                        onAudioTrackChange && onAudioTrackChange(track.id);
+                        setAudioTrackAnchorEl(null);
+                      }}
+                    >
+                      {isSelected && (
+                        <ListItemIcon sx={{ minWidth: 28, color: "inherit" }}>
+                          <CheckRounded fontSize="small" />
+                        </ListItemIcon>
+                      )}
+                      <ListItemText inset={!isSelected}>
+                        {track.label} {track.kind ? `• ${track.kind}` : ""}
+                      </ListItemText>
+                    </MenuItem>
+                  );
+                })}
+              </Menu>
+            </>
+          )}
 
           {/* Playlist drawer toggle button */}
           {onTogglePlaylistDrawer && (
@@ -286,7 +452,7 @@ export const VideoControls: FC<VideoControlsProps> = ({
               onClick={(e: MouseEvent<HTMLButtonElement>) => setSpeedAnchorEl(e.currentTarget)}
               aria-label="playback speed"
             >
-              {state.playbackRate === 1 ? "1x" : `${state.playbackRate}x`}
+              {state.playbackRate === 1 ? "1x" : `${state.playbackRate}x`}\
             </SpeedMenuButton>
           </Tooltip>
 
@@ -297,28 +463,7 @@ export const VideoControls: FC<VideoControlsProps> = ({
             onClose={() => setSpeedAnchorEl(null)}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
             transformOrigin={{ vertical: "bottom", horizontal: "center" }}
-            slotProps={{
-              paper: {
-                sx: {
-                  backgroundColor: "rgba(28, 28, 34, 0.95)",
-                  backdropFilter: "blur(12px)",
-                  color: "#ffffff",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  minWidth: 105,
-                  zIndex: 1400,
-                  "& .MuiMenuItem-root": {
-                    fontSize: "0.82rem",
-                    "&.Mui-selected": {
-                      backgroundColor: "rgba(255, 255, 255, 0.18)",
-                      fontWeight: 700,
-                    },
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
-                    },
-                  },
-                },
-              },
-            }}
+            slotProps={{ paper: menuPaperProps.sx }}
           >
             {speedOptions.map((rate) => (
               <MenuItem
@@ -329,28 +474,29 @@ export const VideoControls: FC<VideoControlsProps> = ({
                   setSpeedAnchorEl(null);
                 }}
               >
-                {rate === 1 ? "Normal (1x)" : `${rate}x`}
+                {rate}x
               </MenuItem>
             ))}
           </Menu>
 
-          {/* Picture in Picture */}
+          {/* PiP Button */}
           {!disablePiP && (
-            <Tooltip title="Picture-in-Picture (p)" PopperProps={{ container: containerEl }}>
+            <Tooltip
+              title={state.isPiP ? "Exit PiP (p)" : "Picture in Picture (p)"}
+              PopperProps={{ container: containerEl }}
+            >
               <IconButton
                 size="small"
                 onClick={onTogglePiP}
                 aria-label="picture in picture"
-                sx={{
-                  color: state.isPiP ? "primary.main" : "#ffffff",
-                }}
+                sx={{ color: "#ffffff" }}
               >
                 <PictureInPictureAltRounded fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
 
-          {/* Fullscreen */}
+          {/* Fullscreen Button */}
           {!disableFullscreen && (
             <Tooltip
               title={state.isFullscreen ? "Exit Fullscreen (f)" : "Fullscreen (f)"}
@@ -359,13 +505,13 @@ export const VideoControls: FC<VideoControlsProps> = ({
               <IconButton
                 size="small"
                 onClick={onToggleFullscreen}
-                aria-label={state.isFullscreen ? "exit fullscreen" : "enter fullscreen"}
+                aria-label="toggle fullscreen"
                 sx={{ color: "#ffffff" }}
               >
                 {state.isFullscreen ? (
-                  <FullscreenExitRounded fontSize="small" />
+                  <FullscreenExitRounded />
                 ) : (
-                  <FullscreenRounded fontSize="small" />
+                  <FullscreenRounded />
                 )}
               </IconButton>
             </Tooltip>

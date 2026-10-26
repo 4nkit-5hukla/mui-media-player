@@ -15,6 +15,9 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
     album: directAlbum,
     poster: directPoster,
     artwork: directArtwork,
+    subtitles: directSubtitles,
+    audioTracks: directAudioTracks,
+    lyrics: directLyrics,
     aspectRatio,
     audioVariant,
     showWaveform,
@@ -33,6 +36,9 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
   const activeAlbum = currentItem?.album || directAlbum;
   const activePoster = currentItem?.poster || directPoster;
   const activeArtwork = currentItem?.artwork || directArtwork || activePoster;
+  const activeSubtitles = currentItem?.subtitles || directSubtitles;
+  const activeAudioTracks = currentItem?.audioTracks || directAudioTracks;
+  const activeLyrics = currentItem?.lyrics || directLyrics;
 
   // Detect whether media is audio or video
   const resolvedType = detectMediaType(activeSrc, activeType);
@@ -45,6 +51,7 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
         artist={activeArtist}
         album={activeAlbum}
         artwork={activeArtwork}
+        lyrics={activeLyrics}
         variant={audioVariant}
         showWaveform={showWaveform}
         playlist={directPlaylist}
@@ -60,6 +67,8 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
       title={activeTitle}
       subtitle={subtitle || activeArtist}
       poster={activePoster}
+      subtitles={activeSubtitles}
+      audioTracks={activeAudioTracks}
       aspectRatio={aspectRatio}
       playlist={directPlaylist}
       {...restProps}

@@ -1,4 +1,4 @@
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Box,
   CircularProgress,
@@ -20,6 +20,7 @@ import { usePlaylistContext } from "../../context/PlaylistContext";
 import { extractYouTubeId, buildYouTubeEmbedUrl } from "../../utils/mediaDetection";
 import { VideoPlayerProps } from "./types";
 import { VideoControls } from "./VideoControls";
+import { VideoSubtitles } from "./VideoSubtitles";
 import {
   VideoContainer,
   VideoElement,
@@ -44,6 +45,12 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
   playsInline = true,
   crossOrigin,
   accentColor,
+  subtitles,
+  activeSubtitleId: controlledSubtitleId,
+  onSubtitleChange,
+  audioTracks,
+  activeAudioTrackId: controlledAudioTrackId,
+  onAudioTrackChange,
   sx,
   className,
   style,
@@ -77,6 +84,42 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
   const prevTrack = explicitOnPrev || playlistCtx?.prev;
   const hasNext = playlistCtx ? playlistCtx.hasNext : false;
   const hasPrev = playlistCtx ? playlistCtx.hasPrev : false;
+
+  // Subtitles state
+  const defaultSubId = subtitles?.find((s) => s.default)?.id || null;
+  const [internalSubtitleId, setInternalSubtitleId] = useState<string | null>(defaultSubId);
+  const activeSubtitleId = controlledSubtitleId !== undefined ? controlledSubtitleId : internalSubtitleId;
+
+  const handleSubtitleChange = (subId: string | null) => {
+    setInternalSubtitleId(subId);
+    if (onSubtitleChange) {
+      onSubtitleChange(subId);
+    }
+  };
+
+  // Audio track switching state
+  const defaultAudioId =
+    audioTracks?.find((t) => t.default)?.id || (audioTracks && audioTracks.length > 0 ? audioTracks[0].id : null);
+  const [internalAudioTrackId, setInternalAudioTrackId] = useState<string | null>(defaultAudioId);
+  const activeAudioTrackId = controlledAudioTrackId !== undefined ? controlledAudioTrackId : internalAudioTrackId;
+
+  const handleAudioTrackChange = (trackId: string) => {
+    setInternalAudioTrackId(trackId);
+    if (onAudioTrackChange) {
+      onAudioTrackChange(trackId);
+    }
+    // If audio track has a different source file, switch video/audio source
+    const selectedTrack = audioTracks?.find((t) => t.id === trackId);
+    if (selectedTrack?.src && mediaRef.current && selectedTrack.src !== mediaRef.current.src) {
+      const currentPos = mediaRef.current.currentTime;
+      const wasPlaying = !mediaRef.current.paused;
+      mediaRef.current.src = selectedTrack.src;
+      mediaRef.current.currentTime = currentPos;
+      if (wasPlaying) {
+        mediaRef.current.play().catch(() => {});
+      }
+    }
+  };
 
   const controller = useMediaController<HTMLVideoElement>({
     autoPlay,
@@ -212,6 +255,28 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
         onClick={togglePlay}
         onDoubleClick={toggleFullscreen}
         {...mediaEventHandlers}
+      >
+        {/* Render native track elements if src provided */}
+        {subtitles?.map((sub) =>
+          sub.src ? (
+            <track
+              key={sub.id}
+              kind="subtitles"
+              label={sub.label}
+              src={sub.src}
+              srcLang={sub.language}
+              default={sub.id === activeSubtitleId}
+            />
+          ) : null
+        )}
+      </VideoElement>
+
+      {/* Styled High-Contrast Subtitle Overlay */}
+      <VideoSubtitles
+        subtitles={subtitles}
+        activeSubtitleId={activeSubtitleId}
+        currentTime={state.currentTime}
+        controlsVisible={isControlsVisible}
       />
 
       {/* Top Header Overlay */}
@@ -321,6 +386,12 @@ export const VideoPlayer: FC<VideoPlayerProps> = ({
         hasNext={hasNext}
         hasPrev={hasPrev}
         showPlaylistControls={showPlaylistControls || hasPlaylist}
+        subtitles={subtitles}
+        activeSubtitleId={activeSubtitleId}
+        onSubtitleChange={handleSubtitleChange}
+        audioTracks={audioTracks}
+        activeAudioTrackId={activeAudioTrackId}
+        onAudioTrackChange={handleAudioTrackChange}
         onTogglePlay={togglePlay}
         onRestart={restart}
         onSkip={skip}

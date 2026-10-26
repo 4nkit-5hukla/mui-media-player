@@ -10,14 +10,21 @@
 [![React](https://img.shields.io/badge/React-18%20%7C%2019-61dafb.svg)](https://react.dev/)
 [![MUI](https://img.shields.io/badge/MUI-v5%20%7C%20v6%20%7C%20v7%20%7C%20v9-007fff.svg)](https://mui.com/)
 
-📖 **[View Live Interactive Storybook Documentation](https://4nkit-5hukla.github.io/mui-media-player/)**
+📖 <a href="https://4nkit-5hukla.github.io/mui-media-player/" target="_blank" rel="noopener noreferrer">**View Live Interactive Storybook Documentation**</a>
 
 ---
 
 ## 🌟 Key Features
 
-- 🎬 **VideoPlayer**: Fully styled with Material UI (`styled`, `sx`), featuring smooth auto-hiding controls (2.5s inactivity timeout), interactive scrubber with live buffer indicator, PiP (Picture-in-Picture), Fullscreen API, playback speed selector (0.25x – 2x), and YouTube embed support.
-- 🎵 **AudioPlayer**: Specialized player for audio tracks, podcasts, and music. Includes album artwork display, animated pulsing sound waves (`AudioWave`), shuffle, repeat-all, and repeat-one modes.
+- 🎬 **VideoPlayer with Subtitles & Multi-Audio Tracks**:
+  - **Subtitles & Closed Captions**: High-contrast styled subtitle overlay supporting WebVTT (`.vtt`), SubRip (`.srt`), or inline cues with multi-language switching menu (English, Spanish, French, etc. or Off).
+  - **Multiple Audio Tracks**: Switch between alternative audio streams (e.g. Original 5.1, Director's Commentary, Dubbed languages).
+  - Smooth auto-hiding controls (2.5s inactivity timeout), interactive scrubber with live buffer indicator, PiP (Picture-in-Picture), Fullscreen API, playback speed selector (0.25x – 2x), and YouTube embed support.
+- 🎵 **AudioPlayer with Synchronized Lyrics & WaveSurfer**:
+  - **ID3 Tag Auto-Extraction**: Automatically extracts embedded album artwork (APIC) and lyrics (USLT/SYLT) from audio files or remote URLs using zero-dependency HTTP range requests.
+  - **Synchronized Lyrics (Karaoke Mode)**: Real-time active lyric highlighting with smooth auto-scroll to the current singing line and click-to-seek functionality.
+  - **Lyrics Synchronization & Transcribe Studio**: Interactive editor allowing users to inject plain lyrics, paste LRC text, or stamp timestamps in real-time as the audio plays.
+  - **WaveSurfer.js Audio Visualizer**: Interactive canvas waveform visualization with scrubbing and theme integration.
   - **3 Visual Variants**: `card` (default modern music card), `compact` (inline bar for comments/articles), and `full` (large hero music hub).
 - 🪄 **MediaPlayer (Universal Smart Detector)**: Pass any media URL or playlist track. `MediaPlayer` automatically detects the media type (`video`, `audio`, or `youtube`) and mounts the appropriate player with unified props.
 - 📻 **MediaBar**: Persistent docked or floating bottom playback bar (similar to Spotify and Apple Music) with top-edge scrubber, volume slider, track metadata, queue drawer, and player expansion.
@@ -46,7 +53,7 @@ npm install @mui/material @mui/icons-material @emotion/react @emotion/styled rea
 
 ## 🚀 Quick Start
 
-### 1. VideoPlayer
+### 1. VideoPlayer with Subtitles & Multi-Audio Tracks
 ```tsx
 import { VideoPlayer } from "mui-media-player";
 
@@ -58,14 +65,36 @@ export default function VideoDemo() {
       subtitle="Blender Foundation • 4K Open Movie"
       poster="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d"
       aspectRatio="16/9"
-      autoPlay={false}
-      onClose={() => console.log("Video closed")}
+      subtitles={[
+        {
+          id: "en",
+          label: "English",
+          language: "en",
+          default: true,
+          cues: [
+            { start: 0.5, end: 3.5, text: "A large, fluffy rabbit awakens." },
+            { start: 3.8, end: 6.5, text: "Birds are chirping in the morning breeze." },
+          ],
+        },
+        {
+          id: "es",
+          label: "Español",
+          language: "es",
+          cues: [
+            { start: 0.5, end: 3.5, text: "Un conejo grande y esponjoso se despierta." },
+          ],
+        },
+      ]}
+      audioTracks={[
+        { id: "main", label: "English (5.1 Surround)", default: true },
+        { id: "commentary", label: "Director's Commentary", kind: "commentary" },
+      ]}
     />
   );
 }
 ```
 
-### 2. AudioPlayer
+### 2. AudioPlayer with Synchronized Lyrics & WaveSurfer
 ```tsx
 import { AudioPlayer } from "mui-media-player";
 
@@ -76,9 +105,14 @@ export default function AudioDemo() {
       title="Midnight Resonance"
       artist="Aura Soundscape"
       album="Nocturne Horizons"
-      artwork="https://images.unsplash.com/photo-1518609878373-06d740f60d8b"
       variant="card" // 'card' | 'compact' | 'full'
-      showWaveform={true}
+      enableWaveSurfer={true} // Interactive WaveSurfer canvas visualizer
+      autoExtractID3={true}   // Auto-extracts embedded album art and lyrics from ID3 tags
+      lyrics={`
+        [00:02.00] Starlight falls across the empty street
+        [00:06.50] Echoes of a distant rhythm and beat
+        [00:11.20] Waves of sound flowing through the night
+      `}
     />
   );
 }
@@ -151,7 +185,7 @@ export default function MediaHub() {
 ## 📚 Storybook Documentation
 
 Explore interactive stories, controls, and use cases in the hosted Storybook:
-👉 **[https://4nkit-5hukla.github.io/mui-media-player/](https://4nkit-5hukla.github.io/mui-media-player/)**
+👉 <a href="https://4nkit-5hukla.github.io/mui-media-player/" target="_blank" rel="noopener noreferrer">**Demo**</a>
 
 To run Storybook locally:
 ```bash

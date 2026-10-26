@@ -1,4 +1,4 @@
-import { FC, useState, MouseEvent } from "react";
+import { FC, useState, useEffect, MouseEvent } from "react";
 import {
   Box,
   IconButton,
@@ -24,14 +24,21 @@ import {
   RepeatOneRounded,
   MusicNoteRounded,
   QueueMusicRounded,
+  LyricsRounded,
+  GraphicEqRounded,
 } from "@mui/icons-material";
 
 import { useMediaController } from "../../hooks/useMediaController";
 import { useKeyboardShortcuts } from "../../hooks/useKeyboardShortcuts";
 import { usePlaylistContext } from "../../context/PlaylistContext";
 import { formatTime } from "../../utils/formatTime";
+import { normalizeLyrics } from "../../utils/lrcParser";
+import { extractID3FromUrl } from "../../utils/id3Parser";
+import { AudioLyrics, ID3Metadata } from "../../types/tracks";
 import { AudioPlayerProps } from "./types";
 import { AudioWave } from "./AudioWave";
+import { WaveSurferVisualizer } from "../AudioVisualizer/WaveSurferVisualizer";
+import { LyricsViewer } from "../Lyrics/LyricsViewer";
 import {
   AudioCardContainer,
   AudioCompactContainer,
@@ -51,6 +58,11 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   artist,
   album,
   artwork,
+  lyrics: initialLyrics,
+  autoExtractID3 = true,
+  enableWaveSurfer = false,
+  onLyricsChange,
+  onID3Parsed,
   variant = "card",
   showWaveform = true,
   autoPlay = false,
@@ -90,6 +102,43 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   const hasPrev = playlistCtx ? playlistCtx.hasPrev : false;
 
   const [speedAnchorEl, setSpeedAnchorEl] = useState<null | HTMLElement>(null);
+  const [showLyricsView, setShowLyricsView] = useState<boolean>(false);
+  const [useWaveSurfer, setUseWaveSurfer] = useState<boolean>(enableWaveSurfer);
+
+  // ID3 Metadata state
+  const [id3Meta, setId3Meta] = useState<ID3Metadata | null>(null);
+  const [currentLyrics, setCurrentLyrics] = useState<AudioLyrics | null>(() =>
+    normalizeLyrics(initialLyrics)
+  );
+
+  // Sync initialLyrics changes
+  useEffect(() => {
+    if (initialLyrics !== undefined) {
+      setCurrentLyrics(normalizeLyrics(initialLyrics));
+    }
+  }, [initialLyrics]);
+
+  // Auto extract ID3 tags from audio source
+  useEffect(() => {
+    if (!src || !autoExtractID3) return;
+
+    extractID3FromUrl(src)
+      .then((meta) => {
+        if (meta.title || meta.artist || meta.lyrics || meta.albumArt) {
+          setId3Meta(meta);
+          if (meta.lyrics && !initialLyrics) {
+            setCurrentLyrics(meta.lyrics);
+          }
+          onID3Parsed?.(meta);
+        }
+      })
+      .catch(() => {});
+  }, [src, autoExtractID3, initialLyrics, onID3Parsed]);
+
+  const effectiveArtwork = artwork || id3Meta?.albumArt;
+  const effectiveTitle = title || id3Meta?.title || "Untitled Track";
+  const effectiveArtist = artist || id3Meta?.artist;
+  const effectiveAlbum = album || id3Meta?.album;
 
   const controller = useMediaController<HTMLAudioElement>({
     autoPlay,
@@ -123,6 +172,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
     toggleMute,
     setVolume,
     setPlaybackRate,
+    seek,
     handleSeekChange,
     handleSeekCommitted,
     handleVolumeChange,
@@ -137,6 +187,11 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
     onRestart: restart,
     onVolumeChange: (delta) => setVolume(state.volume + delta),
   });
+
+  const handleUpdateLyrics = (updatedLyrics: AudioLyrics) => {
+    setCurrentLyrics(updatedLyrics);
+    onLyricsChange?.(updatedLyrics);
+  };
 
   const renderVolumeIcon = () => {
     if (state.isMuted || state.volume === 0) return <VolumeOffRounded fontSize="small" />;
@@ -223,19 +278,19 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
         {/* Artwork */}
         <AudioArtwork
-          src={artwork}
-          alt={title || "Track"}
+          src={effectiveArtwork}
+          alt={effectiveTitle}
           variant="rounded"
           size={42}
           isPlaying={state.isPlaying}
         >
-          {!artwork && <MusicNoteRounded fontSize="small" />}
+          {!effectiveArtwork && <MusicNoteRounded fontSize="small" />}
         </AudioArtwork>
 
         {/* Track Title */}
         <Box sx={{ minWidth: 100, maxWidth: 160 }}>
-          <TrackTitle variant="body2">{title || "Untitled Audio"}</TrackTitle>
-          {artist && <TrackArtist variant="caption">{artist}</TrackArtist>}
+          <TrackTitle variant="body2">{effectiveTitle}</TrackTitle>
+          {effectiveArtist && <TrackArtist variant="caption">{effectiveArtist}</TrackArtist>}
         </Box>
 
         {/* Play/Pause Button */}
@@ -289,8 +344,18 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
           </Typography>
         </Box>
 
-        {/* Volume */}
+        {/* Volume & Actions */}
         <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 0.5 }}>
+          <Tooltip title="Lyrics">
+            <IconButton
+              size="small"
+              onClick={() => setShowLyricsView(true)}
+              sx={{ color: currentLyrics ? "primary.main" : "text.secondary" }}
+            >
+              <LyricsRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
           <IconButton size="small" onClick={toggleMute} aria-label="volume">
             {renderVolumeIcon()}
           </IconButton>
@@ -307,6 +372,38 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
             }}
           />
         </Box>
+
+        {/* Lyrics Dialog for Compact variant */}
+        {showLyricsView && (
+          <Box
+            sx={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 1300,
+              p: { xs: 2, sm: 6 },
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            <Box sx={{ width: "100%", maxWidth: 640, height: 480, borderRadius: 3, overflow: "hidden" }}>
+              <LyricsViewer
+                lyrics={currentLyrics}
+                currentTime={state.currentTime}
+                isPlaying={state.isPlaying}
+                onSeek={seek}
+                onClose={() => setShowLyricsView(false)}
+                onLyricsChange={handleUpdateLyrics}
+                accentColor={accentColor}
+              />
+            </Box>
+          </Box>
+        )}
       </AudioCompactContainer>
     );
   }
@@ -332,6 +429,28 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
             Now Playing
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* Visualizer Toggle */}
+            <Tooltip title={useWaveSurfer ? "Switch to Animated Wave" : "Switch to WaveSurfer Visualizer"}>
+              <IconButton
+                size="small"
+                onClick={() => setUseWaveSurfer(!useWaveSurfer)}
+                sx={{ color: useWaveSurfer ? "primary.main" : "text.secondary" }}
+              >
+                <GraphicEqRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            {/* Lyrics View Toggle */}
+            <Tooltip title={showLyricsView ? "Show Artwork" : "Show Synchronized Lyrics"}>
+              <IconButton
+                size="small"
+                onClick={() => setShowLyricsView(!showLyricsView)}
+                sx={{ color: showLyricsView ? "primary.main" : currentLyrics ? "text.primary" : "text.secondary" }}
+              >
+                <LyricsRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
             {speedMenu}
             {onTogglePlaylistDrawer && (
               <Tooltip title="Playlist">
@@ -344,39 +463,66 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
           </Box>
         </Box>
 
-        {/* Main Artwork and Waveform Row */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3.5, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
-          <AudioArtwork
-            src={artwork}
-            alt={title || "Track"}
-            variant="rounded"
-            size={160}
-            isPlaying={state.isPlaying}
-            sx={{ flexShrink: 0, mx: { xs: "auto", sm: 0 } }}
-          >
-            {!artwork && <MusicNoteRounded sx={{ fontSize: 64 }} />}
-          </AudioArtwork>
-
-          <Box sx={{ flex: 1, minWidth: 0, textAlign: { xs: "center", sm: "left" } }}>
-            <TrackTitle variant="h5" sx={{ fontSize: "1.4rem", mb: 0.5 }}>
-              {title || "Untitled Track"}
-            </TrackTitle>
-            <TrackArtist variant="subtitle1" sx={{ fontSize: "1rem", mb: 0.5 }}>
-              {artist || "Unknown Artist"}
-            </TrackArtist>
-            {album && (
-              <Typography variant="caption" sx={{ color: "text.disabled", display: "block", mb: 2 }}>
-                {album}
-              </Typography>
-            )}
-
-            {showWaveform && (
-              <Box sx={{ mt: 1, display: "flex", justifyContent: { xs: "center", sm: "flex-start" } }}>
-                <AudioWave isPlaying={state.isPlaying} barCount={20} accentColor={accentColor} />
-              </Box>
-            )}
+        {/* Main Artwork or Lyrics Container */}
+        {showLyricsView ? (
+          <Box sx={{ height: 260, borderRadius: 2, overflow: "hidden" }}>
+            <LyricsViewer
+              lyrics={currentLyrics}
+              currentTime={state.currentTime}
+              isPlaying={state.isPlaying}
+              onSeek={seek}
+              onClose={() => setShowLyricsView(false)}
+              onLyricsChange={handleUpdateLyrics}
+              accentColor={accentColor}
+            />
           </Box>
-        </Box>
+        ) : (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 3.5, flexWrap: { xs: "wrap", sm: "nowrap" } }}>
+            <AudioArtwork
+              src={effectiveArtwork}
+              alt={effectiveTitle}
+              variant="rounded"
+              size={160}
+              isPlaying={state.isPlaying}
+              sx={{ flexShrink: 0, mx: { xs: "auto", sm: 0 } }}
+            >
+              {!effectiveArtwork && <MusicNoteRounded sx={{ fontSize: 64 }} />}
+            </AudioArtwork>
+
+            <Box sx={{ flex: 1, minWidth: 0, textAlign: { xs: "center", sm: "left" } }}>
+              <TrackTitle variant="h5" sx={{ fontSize: "1.4rem", mb: 0.5 }}>
+                {effectiveTitle}
+              </TrackTitle>
+              <TrackArtist variant="subtitle1" sx={{ fontSize: "1rem", mb: 0.5 }}>
+                {effectiveArtist || "Unknown Artist"}
+              </TrackArtist>
+              {effectiveAlbum && (
+                <Typography variant="caption" sx={{ color: "text.disabled", display: "block", mb: 2 }}>
+                  {effectiveAlbum}
+                </Typography>
+              )}
+
+              {/* WaveSurfer or AudioWave rendering */}
+              {showWaveform && (
+                <Box sx={{ mt: 1, width: "100%" }}>
+                  {useWaveSurfer ? (
+                    <WaveSurferVisualizer
+                      mediaElement={mediaRef.current}
+                      url={src}
+                      accentColor={accentColor}
+                      height={48}
+                      onSeek={seek}
+                    />
+                  ) : (
+                    <Box sx={{ display: "flex", justifyContent: { xs: "center", sm: "flex-start" } }}>
+                      <AudioWave isPlaying={state.isPlaying} barCount={20} accentColor={accentColor} />
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
 
         {/* Scrubber / Seekbar */}
         <Box sx={{ width: "100%", px: 0.5 }}>
@@ -536,33 +682,60 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
       {audioElement}
 
       {/* Top Track Info Row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <AudioArtwork
-          src={artwork}
-          alt={title || "Track"}
-          variant="rounded"
-          size={64}
-          isPlaying={state.isPlaying}
-        >
-          {!artwork && <MusicNoteRounded />}
-        </AudioArtwork>
+      {showLyricsView ? (
+        <Box sx={{ height: 200, borderRadius: 2, overflow: "hidden", mb: 2 }}>
+          <LyricsViewer
+            lyrics={currentLyrics}
+            currentTime={state.currentTime}
+            isPlaying={state.isPlaying}
+            onSeek={seek}
+            onClose={() => setShowLyricsView(false)}
+            onLyricsChange={handleUpdateLyrics}
+            accentColor={accentColor}
+          />
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <AudioArtwork
+            src={effectiveArtwork}
+            alt={effectiveTitle}
+            variant="rounded"
+            size={64}
+            isPlaying={state.isPlaying}
+          >
+            {!effectiveArtwork && <MusicNoteRounded />}
+          </AudioArtwork>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <TrackTitle>{title || "Untitled Audio"}</TrackTitle>
-          <TrackArtist>{artist || "Unknown Artist"}</TrackArtist>
-          {album && (
-            <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>
-              {album}
-            </Typography>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <TrackTitle>{effectiveTitle}</TrackTitle>
+            <TrackArtist>{effectiveArtist || "Unknown Artist"}</TrackArtist>
+            {effectiveAlbum && (
+              <Typography variant="caption" sx={{ color: "text.disabled", display: "block" }}>
+                {effectiveAlbum}
+              </Typography>
+            )}
+          </Box>
+
+          {showWaveform && (
+            <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+              <AudioWave isPlaying={state.isPlaying} barCount={10} accentColor={accentColor} />
+            </Box>
           )}
         </Box>
+      )}
 
-        {showWaveform && (
-          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
-            <AudioWave isPlaying={state.isPlaying} barCount={10} accentColor={accentColor} />
-          </Box>
-        )}
-      </Box>
+      {/* WaveSurfer visualizer in card mode if enabled */}
+      {useWaveSurfer && !showLyricsView && (
+        <Box sx={{ my: 1, width: "100%" }}>
+          <WaveSurferVisualizer
+            mediaElement={mediaRef.current}
+            url={src}
+            accentColor={accentColor}
+            height={40}
+            onSeek={seek}
+          />
+        </Box>
+      )}
 
       {/* Seekbar and Timestamps */}
       <Box sx={{ width: "100%", px: 0.5 }}>
@@ -684,7 +857,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
         </Tooltip>
       </Box>
 
-      {/* Bottom Tool Bar: Volume, Speed & Playlist Drawer toggle */}
+      {/* Bottom Tool Bar: Volume, Lyrics, WaveSurfer, Speed & Playlist Drawer toggle */}
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pt: 0.5 }}>
         {/* Volume */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -705,8 +878,30 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
           />
         </Box>
 
-        {/* Speed & Actions */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {/* Actions */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          {/* WaveSurfer Toggle */}
+          <Tooltip title={useWaveSurfer ? "Hide Waveform" : "Show WaveSurfer Visualizer"}>
+            <IconButton
+              size="small"
+              onClick={() => setUseWaveSurfer(!useWaveSurfer)}
+              sx={{ color: useWaveSurfer ? "primary.main" : "text.secondary" }}
+            >
+              <GraphicEqRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {/* Lyrics View Toggle */}
+          <Tooltip title={showLyricsView ? "Hide Lyrics" : "Show Synchronized Lyrics"}>
+            <IconButton
+              size="small"
+              onClick={() => setShowLyricsView(!showLyricsView)}
+              sx={{ color: showLyricsView ? "primary.main" : currentLyrics ? "text.primary" : "text.secondary" }}
+            >
+              <LyricsRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
           {speedMenu}
           {onTogglePlaylistDrawer && (
             <Tooltip title="Playlist">

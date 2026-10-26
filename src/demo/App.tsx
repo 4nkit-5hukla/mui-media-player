@@ -18,6 +18,7 @@ import {
   FormControl,
   FormLabel,
   Chip,
+  Stack,
 } from "@mui/material";
 import {
   Brightness4Rounded,
@@ -30,6 +31,9 @@ import {
   DashboardRounded,
   KeyboardRounded,
   OpenInNewRounded,
+  SubtitlesRounded,
+  LyricsRounded,
+  GraphicEqRounded,
 } from "@mui/icons-material";
 
 import { VideoPlayer } from "../components/VideoPlayer";
@@ -38,7 +42,7 @@ import { MediaPlayer } from "../components/MediaPlayer";
 import { MediaBar } from "../components/MediaBar";
 import { MediaCenter } from "../components/MediaCenter";
 import { PlaylistProvider } from "../context/PlaylistContext";
-import { SAMPLE_PLAYLIST } from "./sampleData";
+import { SAMPLE_PLAYLIST, SAMPLE_SUBTITLES, SAMPLE_AUDIO_TRACKS } from "./sampleData";
 import { AspectRatio, AudioPlayerVariant, MediaBarPosition } from "../types/player";
 
 export const App: FC = () => {
@@ -87,7 +91,7 @@ export const App: FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <PlaylistProvider playlist={SAMPLE_PLAYLIST}>
+      <PlaylistProvider initialItems={SAMPLE_PLAYLIST}>
         <Box sx={{ minHeight: "100vh", pb: mediaBarOpen ? 14 : 6, display: "flex", flexDirection: "column" }}>
           {/* Top App Bar */}
           <Box
@@ -113,7 +117,7 @@ export const App: FC = () => {
                   mui-media-player
                 </Typography>
                 <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.75rem" }}>
-                  MUI v6/v7/v9 &bull; React 18+ &bull; Ready for npm
+                  MUI &bull; Subtitles &bull; Synchronized Lyrics &bull; WaveSurfer &bull; Multi-Track Audio
                 </Typography>
               </Box>
             </Box>
@@ -152,8 +156,8 @@ export const App: FC = () => {
                   },
                 }}
               >
-                <Tab icon={<VideocamRounded fontSize="small" />} iconPosition="start" label="VideoPlayer" />
-                <Tab icon={<AudiotrackRounded fontSize="small" />} iconPosition="start" label="AudioPlayer" />
+                <Tab icon={<VideocamRounded fontSize="small" />} iconPosition="start" label="VideoPlayer (Subtitles & Audio Tracks)" />
+                <Tab icon={<AudiotrackRounded fontSize="small" />} iconPosition="start" label="AudioPlayer (Lyrics & WaveSurfer)" />
                 <Tab icon={<AutoAwesomeRounded fontSize="small" />} iconPosition="start" label="MediaPlayer (Auto-Detect)" />
                 <Tab icon={<VerticalAlignBottomRounded fontSize="small" />} iconPosition="start" label="MediaBar" />
                 <Tab icon={<DashboardRounded fontSize="small" />} iconPosition="start" label="MediaCenter" />
@@ -171,8 +175,12 @@ export const App: FC = () => {
                     VideoPlayer
                   </Typography>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Production-ready HTML5 & YouTube video player with sleek MUI controls, auto-hide overlays, buffer bar, keyboard navigation, and picture-in-picture.
+                    Includes custom high-contrast subtitles with language switching (English, Spanish, French), multiple audio track switching (Original 5.1, Director's Commentary, Spanish Dub), interactive scrubber with buffer progress, PiP, and Fullscreen.
                   </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                    <Chip icon={<SubtitlesRounded fontSize="small" />} label="Subtitles Switching (EN/ES/FR)" size="small" color="primary" variant="outlined" />
+                    <Chip icon={<AudiotrackRounded fontSize="small" />} label="Multi-Audio Tracks" size="small" color="secondary" variant="outlined" />
+                  </Stack>
                 </Box>
 
                 {/* Aspect & Source Controls */}
@@ -219,6 +227,8 @@ export const App: FC = () => {
                     subtitle="Blender Foundation"
                     poster={SAMPLE_PLAYLIST[1].poster}
                     aspectRatio={videoAspect}
+                    subtitles={SAMPLE_SUBTITLES}
+                    audioTracks={SAMPLE_AUDIO_TRACKS}
                     onClose={() => console.log("Close video triggered")}
                   />
                 </Box>
@@ -253,8 +263,12 @@ export const App: FC = () => {
                     AudioPlayer
                   </Typography>
                   <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Dedicated audio player component offering multiple layout variants, animated sound waves, repeat modes, playlist queueing, and shuffle.
+                    Features ID3 tag extraction for embedded album art & lyrics, real-time synchronized lyrics (karaoke style with click-to-seek and live transcribing editor), and interactive WaveSurfer.js waveform visualizer.
                   </Typography>
+                  <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                    <Chip icon={<LyricsRounded fontSize="small" />} label="Synchronized Lyrics & Editor" size="small" color="primary" variant="outlined" />
+                    <Chip icon={<GraphicEqRounded fontSize="small" />} label="WaveSurfer Visualizer" size="small" color="secondary" variant="outlined" />
+                  </Stack>
                 </Box>
 
                 {/* Variant Switcher */}
@@ -281,6 +295,8 @@ export const App: FC = () => {
                     artist={SAMPLE_PLAYLIST[0].artist}
                     album={SAMPLE_PLAYLIST[0].album}
                     artwork={SAMPLE_PLAYLIST[0].artwork}
+                    lyrics={SAMPLE_PLAYLIST[0].lyrics}
+                    enableWaveSurfer={true}
                     variant={audioVariant}
                   />
                 </Box>
@@ -321,6 +337,8 @@ export const App: FC = () => {
                         src={SAMPLE_PLAYLIST[1].src}
                         title="Auto-Detected Video (MP4)"
                         poster={SAMPLE_PLAYLIST[1].poster}
+                        subtitles={SAMPLE_SUBTITLES}
+                        audioTracks={SAMPLE_AUDIO_TRACKS}
                       />
                     </Box>
                   )}
@@ -332,6 +350,8 @@ export const App: FC = () => {
                         title="Auto-Detected Audio (MP3)"
                         artist={SAMPLE_PLAYLIST[0].artist}
                         artwork={SAMPLE_PLAYLIST[0].artwork}
+                        lyrics={SAMPLE_PLAYLIST[0].lyrics}
+                        enableWaveSurfer={true}
                       />
                     </Box>
                   )}

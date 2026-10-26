@@ -1,5 +1,6 @@
 import { CSSProperties, SyntheticEvent } from "react";
 import { SxProps, Theme } from "@mui/material";
+import { SubtitleTrack, AudioTrackOption, AudioLyrics, ID3Metadata } from "./tracks";
 
 export type MediaType = "video" | "audio" | "youtube" | "auto";
 
@@ -70,6 +71,28 @@ export interface BasePlayerProps {
   className?: string;
   /** Custom inline style */
   style?: CSSProperties;
+  /** Available subtitle / closed caption tracks */
+  subtitles?: SubtitleTrack[];
+  /** Controlled active subtitle ID (pass null for disabled) */
+  activeSubtitleId?: string | null;
+  /** Callback when user changes active subtitle track */
+  onSubtitleChange?: (subtitleId: string | null) => void;
+  /** Available multiple audio tracks (for videos with alternate audio or languages) */
+  audioTracks?: AudioTrackOption[];
+  /** Controlled active audio track ID */
+  activeAudioTrackId?: string | null;
+  /** Callback when user changes active audio track */
+  onAudioTrackChange?: (audioTrackId: string) => void;
+  /** Synchronized or unsynchronized lyrics (as object or LRC string) */
+  lyrics?: AudioLyrics | string;
+  /** Whether to automatically extract ID3 metadata (lyrics, album art) from audio files */
+  autoExtractID3?: boolean;
+  /** Callback when ID3 tags are extracted from the media file */
+  onID3Parsed?: (metadata: ID3Metadata) => void;
+  /** Callback when lyrics are updated, injected, or synchronized */
+  onLyricsChange?: (lyrics: AudioLyrics) => void;
+  /** Enable interactive WaveSurfer canvas audio visualizer */
+  enableWaveSurfer?: boolean;
   /** Callback when media starts playing */
   onPlay?: () => void;
   /** Callback when media pauses */

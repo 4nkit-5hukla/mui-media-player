@@ -3,6 +3,7 @@ import { Box, Button } from '@mui/material'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import ShareIcon from '@mui/icons-material/Share'
 import { VideoPlayer } from './VideoPlayer'
+import { SAMPLE_SUBTITLES, SAMPLE_AUDIO_TRACKS } from '../../demo/sampleData'
 
 const sampleVideoUrl =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
@@ -17,7 +18,7 @@ const meta: Meta<typeof VideoPlayer> = {
     docs: {
       description: {
         component:
-          'A sleek, responsive, production-ready video player component built on MUI. Includes time scrubbing with buffer progress indicator, auto-hiding glassmorphic controls, volume slider with mute toggle, playback rate controls, picture-in-picture (PiP), fullscreen mode, keyboard shortcuts, and YouTube embed support.'
+          'A sleek, responsive, production-ready video player component built on MUI. Includes subtitles with language switching (English, Spanish, French), multiple audio track switching (Original, Commentary, Dubbed), time scrubbing with buffer progress indicator, auto-hiding glassmorphic controls, volume slider with mute toggle, playback rate controls, picture-in-picture (PiP), fullscreen mode, keyboard shortcuts, and YouTube embed support.'
       }
     }
   },
@@ -68,6 +69,24 @@ export const Default: Story = {
     poster: samplePoster,
     aspectRatio: '16/9',
     accentColor: 'primary'
+  },
+  render: (args) => (
+    <Box sx={{ maxWidth: 860, mx: 'auto' }}>
+      <VideoPlayer {...args} />
+    </Box>
+  )
+}
+
+export const SubtitlesAndMultiAudioTracks: Story = {
+  args: {
+    src: sampleVideoUrl,
+    title: 'Video with Subtitles & Multi-Audio Tracks',
+    subtitle: 'Switch languages (English / Spanish / French) & Audio commentary in bottom bar',
+    poster: samplePoster,
+    aspectRatio: '16/9',
+    accentColor: 'primary',
+    subtitles: SAMPLE_SUBTITLES,
+    audioTracks: SAMPLE_AUDIO_TRACKS,
   },
   render: (args) => (
     <Box sx={{ maxWidth: 860, mx: 'auto' }}>
