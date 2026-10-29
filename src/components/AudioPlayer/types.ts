@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { AudioPlayerVariant, BasePlayerProps } from "../../types/player";
+import { AudioPlayerVariant, AudioVisualizerType, AudioSeekbarMode, BasePlayerProps } from "../../types/player";
 import { PlaylistItem } from "../../types/playlist";
 
 export interface AudioPlayerProps extends BasePlayerProps {
@@ -29,4 +29,8 @@ export interface AudioPlayerProps extends BasePlayerProps {
   onTogglePlaylistDrawer?: () => void;
   /** Extra ReactNode controls */
   extraControls?: ReactNode;
+  /** Callback when seekbar mode changes ('slider' | 'waveform') */
+  onSeekbarModeChange?: (mode: AudioSeekbarMode) => void;
+  /** Callback when visualizer changes ('wavesurfer' | 'spectrum' | 'bars' | 'none') */
+  onVisualizerChange?: (type: AudioVisualizerType) => void;
 }

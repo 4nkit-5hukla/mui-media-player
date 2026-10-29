@@ -5,3 +5,4 @@ export * from "./theme";
 export * from "./lrcParser";
 export * from "./vttParser";
 export * from "./id3Parser";
+export * from "./wavePeaks";

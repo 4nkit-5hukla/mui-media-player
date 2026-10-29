@@ -14,6 +14,10 @@ export type MediaBarPosition = "bottom" | "top" | "floating";
 
 export type AspectRatio = "16/9" | "4/3" | "1/1" | "21/9" | "auto" | string;
 
+export type AudioVisualizerType = "wavesurfer" | "spectrum" | "bars" | "none";
+
+export type AudioSeekbarMode = "slider" | "waveform";
+
 export interface MediaTrackSource {
   src: string;
   type?: string;
@@ -93,6 +97,10 @@ export interface BasePlayerProps {
   onLyricsChange?: (lyrics: AudioLyrics) => void;
   /** Enable interactive WaveSurfer canvas audio visualizer */
   enableWaveSurfer?: boolean;
+  /** Audio visualizer rendering style (wavesurfer | spectrum | bars | none) */
+  visualizer?: AudioVisualizerType;
+  /** Scrubber / Seekbar rendering mode (slider | waveform) */
+  seekbarMode?: AudioSeekbarMode;
   /** Callback when media starts playing */
   onPlay?: () => void;
   /** Callback when media pauses */

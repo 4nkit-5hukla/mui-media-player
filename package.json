@@ -1,6 +1,6 @@
 {
   "name": "mui-media-player",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "A production-grade, highly customizable media player library for React and MUI with VideoPlayer, AudioPlayer, MediaPlayer, MediaBar, MediaCenter, and comprehensive playlist support.",
   "type": "module",
   "main": "./dist/mui-media-player.es.js",

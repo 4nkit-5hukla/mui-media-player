@@ -1,16 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, useTheme, SxProps, Theme, Typography, CircularProgress } from "@mui/material";
+import { Box, useTheme, SxProps, Theme, CircularProgress } from "@mui/material";
 import WaveSurfer from "wavesurfer.js";
 import { resolveAccentColor } from "../../utils/theme";
+import { generateDeterministicPeaks } from "../../utils/wavePeaks";
 
 export interface WaveSurferVisualizerProps {
   /** Target audio media element to sync with */
   mediaElement?: HTMLMediaElement | null;
   /** Audio URL to render waveform for */
   url?: string;
+  /** Explicit precomputed waveform peaks */
+  peaks?: number[];
+  /** Track duration in seconds */
+  duration?: number;
   /** Accent color (MUI palette color or hex) */
   accentColor?: string;
-  /** Height of waveform canvas in pixels (default 64) */
+  /** Height of waveform canvas in pixels (default 48) */
   height?: number;
   /** Bar width in pixels (default 2) */
   barWidth?: number;
@@ -35,8 +40,10 @@ export interface WaveSurferVisualizerProps {
 export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
   mediaElement,
   url,
+  peaks: explicitPeaks,
+  duration,
   accentColor = "primary",
-  height = 64,
+  height = 48,
   barWidth = 2,
   barGap = 2,
   barRadius = 2,
@@ -50,7 +57,6 @@ export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const waveSurferRef = useRef<WaveSurfer | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [loadError, setLoadError] = useState<boolean>(false);
   const theme = useTheme();
 
   const resolvedAccent = resolveAccentColor(theme, accentColor);
@@ -58,61 +64,91 @@ export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
   const defaultWaveColor =
     waveColor ||
     (theme.palette.mode === "dark"
-      ? "rgba(255, 255, 255, 0.25)"
-      : "rgba(0, 0, 0, 0.2)");
+      ? "rgba(255, 255, 255, 0.22)"
+      : "rgba(0, 0, 0, 0.18)");
   const defaultCursorColor = cursorColor || resolvedAccent;
 
   useEffect(() => {
     if (!containerRef.current || typeof window === "undefined") return;
 
     const audioSource = url || mediaElement?.src;
-    if (!audioSource && !mediaElement) return;
+    if (!audioSource && !mediaElement && !explicitPeaks) return;
 
     setIsLoading(true);
-    setLoadError(false);
 
     let ws: WaveSurfer | null = null;
+    let isCancelled = false;
 
-    try {
-      ws = WaveSurfer.create({
-        container: containerRef.current,
-        height,
-        barWidth,
-        barGap,
-        barRadius,
-        waveColor: defaultWaveColor,
-        progressColor: defaultProgressColor,
-        cursorColor: defaultCursorColor,
-        cursorWidth: 2,
-        interact: interactive,
-        media: mediaElement || undefined,
-        url: mediaElement ? undefined : url,
-      });
+    const initWaveSurfer = (peaksToUse?: number[]) => {
+      if (isCancelled || !containerRef.current) return;
 
-      waveSurferRef.current = ws;
+      try {
+        if (ws) {
+          ws.destroy();
+        }
 
-      ws.on("ready", () => {
-        setIsLoading(false);
-      });
+        const effectiveDuration = duration || mediaElement?.duration || 180;
+        const finalPeaks = peaksToUse || explicitPeaks;
 
-      ws.on("error", (err) => {
-        console.warn("WaveSurfer loading error:", err);
-        setLoadError(true);
-        setIsLoading(false);
-      });
-
-      if (onSeek) {
-        ws.on("interaction", (newTime: number) => {
-          onSeek(newTime);
+        ws = WaveSurfer.create({
+          container: containerRef.current,
+          height,
+          barWidth,
+          barGap,
+          barRadius,
+          waveColor: defaultWaveColor,
+          progressColor: defaultProgressColor,
+          cursorColor: defaultCursorColor,
+          cursorWidth: 2,
+          interact: interactive,
+          media: mediaElement || undefined,
+          url: finalPeaks ? undefined : (mediaElement ? undefined : url),
+          peaks: finalPeaks ? [finalPeaks] : undefined,
+          duration: finalPeaks ? effectiveDuration : undefined,
         });
+
+        waveSurferRef.current = ws;
+
+        ws.on("ready", () => {
+          if (!isCancelled) setIsLoading(false);
+        });
+
+        ws.on("error", (err) => {
+          console.warn("WaveSurfer encountered network/CORS error, falling back to precomputed wave peaks:", err);
+          // If fetch fails (e.g. CORS), gracefully fallback to deterministic peaks so waveform always displays
+          if (!peaksToUse && !isCancelled) {
+            const fallbackPeaks = generateDeterministicPeaks(audioSource || "audio", 120);
+            initWaveSurfer(fallbackPeaks);
+          } else {
+            if (!isCancelled) setIsLoading(false);
+          }
+        });
+
+        if (onSeek) {
+          ws.on("interaction", (newTime: number) => {
+            onSeek(newTime);
+          });
+        }
+      } catch (err) {
+        console.warn("WaveSurfer creation fallback:", err);
+        if (!peaksToUse && !isCancelled) {
+          const fallbackPeaks = generateDeterministicPeaks(audioSource || "audio", 120);
+          initWaveSurfer(fallbackPeaks);
+        } else {
+          if (!isCancelled) setIsLoading(false);
+        }
       }
-    } catch (err) {
-      console.warn("Failed to initialize WaveSurfer:", err);
-      setLoadError(true);
-      setIsLoading(false);
+    };
+
+    // If explicit peaks are provided, render immediately without network request
+    if (explicitPeaks) {
+      initWaveSurfer(explicitPeaks);
+    } else {
+      initWaveSurfer();
     }
 
     return () => {
+      isCancelled = true;
       try {
         if (ws) {
           ws.destroy();
@@ -125,6 +161,8 @@ export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
   }, [
     mediaElement,
     url,
+    explicitPeaks,
+    duration,
     height,
     barWidth,
     barGap,
@@ -135,10 +173,6 @@ export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
     interactive,
     onSeek,
   ]);
-
-  if (loadError) {
-    return null; // Gracefully fallback if audio decoding is unsupported or blocked by CORS
-  }
 
   return (
     <Box
@@ -164,17 +198,17 @@ export const WaveSurferVisualizer: React.FC<WaveSurferVisualizerProps> = ({
           }}
         >
           <CircularProgress size={16} sx={{ color: resolvedAccent }} />
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Generating waveform...
-          </Typography>
         </Box>
       )}
       <Box
         ref={containerRef}
         sx={{
           width: "100%",
-          opacity: isLoading ? 0.3 : 1,
-          transition: "opacity 0.3s ease",
+          opacity: isLoading ? 0.4 : 1,
+          transition: "opacity 0.25s ease",
+          "& ::part(cursor)": {
+            borderRadius: 1,
+          },
         }}
       />
     </Box>

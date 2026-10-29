@@ -43,7 +43,7 @@ import { MediaBar } from "../components/MediaBar";
 import { MediaCenter } from "../components/MediaCenter";
 import { PlaylistProvider } from "../context/PlaylistContext";
 import { SAMPLE_PLAYLIST, SAMPLE_SUBTITLES, SAMPLE_AUDIO_TRACKS } from "./sampleData";
-import { AspectRatio, AudioPlayerVariant, MediaBarPosition } from "../types/player";
+import { AspectRatio, AudioPlayerVariant, AudioSeekbarMode, AudioVisualizerType, MediaBarPosition } from "../types/player";
 
 export const App: FC = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -65,6 +65,8 @@ export const App: FC = () => {
 
   // MediaCenter state
   const [mediaCenterModalOpen, setMediaCenterModalOpen] = useState(false);
+  const [demoSeekbarMode, setDemoSeekbarMode] = useState<AudioSeekbarMode>("waveform");
+  const [demoVisualizer, setDemoVisualizer] = useState<AudioVisualizerType>("wavesurfer");
 
   const theme = createTheme({
     palette: {
@@ -223,8 +225,8 @@ export const App: FC = () => {
                 <Box sx={{ width: "100%", maxWidth: 840, mx: "auto" }}>
                   <VideoPlayer
                     src={videoSrc}
-                    title="Big Buck Bunny - Open Movie Project"
-                    subtitle="Blender Foundation"
+                    title="Surfing Adventure (720p HD)"
+                    subtitle="Action Sports"
                     poster={SAMPLE_PLAYLIST[1].poster}
                     aspectRatio={videoAspect}
                     subtitles={SAMPLE_SUBTITLES}
@@ -271,8 +273,8 @@ export const App: FC = () => {
                   </Stack>
                 </Box>
 
-                {/* Variant Switcher */}
-                <Paper sx={{ p: 2, display: "flex", alignItems: "center", gap: 3 }}>
+                {/* Controls Switcher */}
+                <Paper sx={{ p: 2, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 3 }}>
                   <FormControl size="small">
                     <FormLabel sx={{ fontSize: "0.78rem" }}>Layout Variant</FormLabel>
                     <RadioGroup
@@ -280,9 +282,35 @@ export const App: FC = () => {
                       value={audioVariant}
                       onChange={(e) => setAudioVariant(e.target.value as AudioPlayerVariant)}
                     >
-                      <FormControlLabel value="card" control={<Radio size="small" />} label="Card (Default)" />
-                      <FormControlLabel value="compact" control={<Radio size="small" />} label="Compact (Inline)" />
+                      <FormControlLabel value="card" control={<Radio size="small" />} label="Card" />
+                      <FormControlLabel value="compact" control={<Radio size="small" />} label="Compact" />
                       <FormControlLabel value="full" control={<Radio size="small" />} label="Full Hero" />
+                    </RadioGroup>
+                  </FormControl>
+
+                  <FormControl size="small">
+                    <FormLabel sx={{ fontSize: "0.78rem" }}>Seekbar Mode</FormLabel>
+                    <RadioGroup
+                      row
+                      value={demoSeekbarMode}
+                      onChange={(e) => setDemoSeekbarMode(e.target.value as AudioSeekbarMode)}
+                    >
+                      <FormControlLabel value="waveform" control={<Radio size="small" />} label="WaveData Seekbar" />
+                      <FormControlLabel value="slider" control={<Radio size="small" />} label="MUI Slider" />
+                    </RadioGroup>
+                  </FormControl>
+
+                  <FormControl size="small">
+                    <FormLabel sx={{ fontSize: "0.78rem" }}>Visualizer Style</FormLabel>
+                    <RadioGroup
+                      row
+                      value={demoVisualizer}
+                      onChange={(e) => setDemoVisualizer(e.target.value as AudioVisualizerType)}
+                    >
+                      <FormControlLabel value="wavesurfer" control={<Radio size="small" />} label="WaveSurfer" />
+                      <FormControlLabel value="spectrum" control={<Radio size="small" />} label="Spectrum" />
+                      <FormControlLabel value="bars" control={<Radio size="small" />} label="Bars" />
+                      <FormControlLabel value="none" control={<Radio size="small" />} label="Off" />
                     </RadioGroup>
                   </FormControl>
                 </Paper>
@@ -296,8 +324,11 @@ export const App: FC = () => {
                     album={SAMPLE_PLAYLIST[0].album}
                     artwork={SAMPLE_PLAYLIST[0].artwork}
                     lyrics={SAMPLE_PLAYLIST[0].lyrics}
-                    enableWaveSurfer={true}
                     variant={audioVariant}
+                    visualizer={demoVisualizer}
+                    seekbarMode={demoSeekbarMode}
+                    onSeekbarModeChange={setDemoSeekbarMode}
+                    onVisualizerChange={setDemoVisualizer}
                   />
                 </Box>
               </Box>
@@ -351,7 +382,8 @@ export const App: FC = () => {
                         artist={SAMPLE_PLAYLIST[0].artist}
                         artwork={SAMPLE_PLAYLIST[0].artwork}
                         lyrics={SAMPLE_PLAYLIST[0].lyrics}
-                        enableWaveSurfer={true}
+                        visualizer="wavesurfer"
+                        seekbarMode="waveform"
                       />
                     </Box>
                   )}

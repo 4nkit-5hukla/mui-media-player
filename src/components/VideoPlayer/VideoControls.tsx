@@ -452,7 +452,7 @@ export const VideoControls: FC<VideoControlsProps> = ({
               onClick={(e: MouseEvent<HTMLButtonElement>) => setSpeedAnchorEl(e.currentTarget)}
               aria-label="playback speed"
             >
-              {state.playbackRate === 1 ? "1x" : `${state.playbackRate}x`}\
+              {state.playbackRate === 1 ? "1x" : `${state.playbackRate}x`}
             </SpeedMenuButton>
           </Tooltip>
 

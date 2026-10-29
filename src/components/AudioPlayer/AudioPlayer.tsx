@@ -26,6 +26,7 @@ import {
   QueueMusicRounded,
   LyricsRounded,
   GraphicEqRounded,
+  EqualizerRounded,
 } from "@mui/icons-material";
 
 import { useMediaController } from "../../hooks/useMediaController";
@@ -36,8 +37,9 @@ import { normalizeLyrics } from "../../utils/lrcParser";
 import { extractID3FromUrl } from "../../utils/id3Parser";
 import { AudioLyrics, ID3Metadata } from "../../types/tracks";
 import { AudioPlayerProps } from "./types";
+import { AudioVisualizerType, AudioSeekbarMode } from "../../types/player";
 import { AudioWave } from "./AudioWave";
-import { WaveSurferVisualizer } from "../AudioVisualizer/WaveSurferVisualizer";
+import { WaveSurferVisualizer, WaveformSeekbar, SpectrumVisualizer } from "../AudioVisualizer";
 import { LyricsViewer } from "../Lyrics/LyricsViewer";
 import {
   AudioCardContainer,
@@ -61,6 +63,10 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
   lyrics: initialLyrics,
   autoExtractID3 = true,
   enableWaveSurfer = false,
+  visualizer: propVisualizer,
+  seekbarMode: propSeekbarMode = "slider",
+  onVisualizerChange,
+  onSeekbarModeChange,
   onLyricsChange,
   onID3Parsed,
   variant = "card",
@@ -103,7 +109,36 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
   const [speedAnchorEl, setSpeedAnchorEl] = useState<null | HTMLElement>(null);
   const [showLyricsView, setShowLyricsView] = useState<boolean>(false);
-  const [useWaveSurfer, setUseWaveSurfer] = useState<boolean>(enableWaveSurfer);
+  const initialVis = propVisualizer || (enableWaveSurfer ? "wavesurfer" : (showWaveform ? "wavesurfer" : "none"));
+  const [currentVisualizer, setCurrentVisualizer] = useState<AudioVisualizerType>(initialVis);
+  const [currentSeekbarMode, setCurrentSeekbarMode] = useState<AudioSeekbarMode>(propSeekbarMode);
+
+  useEffect(() => {
+    if (propVisualizer !== undefined) {
+      setCurrentVisualizer(propVisualizer);
+    }
+  }, [propVisualizer]);
+
+  useEffect(() => {
+    if (propSeekbarMode !== undefined) {
+      setCurrentSeekbarMode(propSeekbarMode);
+    }
+  }, [propSeekbarMode]);
+
+  const cycleVisualizer = () => {
+    const sequence: AudioVisualizerType[] = ["wavesurfer", "spectrum", "bars", "none"];
+    const currentIndex = sequence.indexOf(currentVisualizer);
+    const nextIndex = (currentIndex + 1) % sequence.length;
+    const nextVis = sequence[nextIndex];
+    setCurrentVisualizer(nextVis);
+    onVisualizerChange?.(nextVis);
+  };
+
+  const toggleSeekbarMode = () => {
+    const nextMode: AudioSeekbarMode = currentSeekbarMode === "slider" ? "waveform" : "slider";
+    setCurrentSeekbarMode(nextMode);
+    onSeekbarModeChange?.(nextMode);
+  };
 
   // ID3 Metadata state
   const [id3Meta, setId3Meta] = useState<ID3Metadata | null>(null);
@@ -317,20 +352,33 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
         {/* Seekbar and Time */}
         <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 1.5 }}>
-          <AudioSlider
-            size="small"
-            min={0}
-            step={0.1}
-            max={state.duration > 0 ? state.duration : 100}
-            value={state.currentTime}
-            bufferedEnd={state.bufferedEnd}
-            duration={state.duration}
-            onChange={handleSeekChange}
-            onChangeCommitted={handleSeekCommitted}
-            valueLabelDisplay="auto"
-            valueLabelFormat={formatTime}
-            aria-label="audio seekbar"
-          />
+          {currentSeekbarMode === "waveform" ? (
+            <WaveformSeekbar
+              currentTime={state.currentTime}
+              duration={state.duration}
+              bufferedEnd={state.bufferedEnd}
+              onSeek={seek}
+              url={src}
+              accentColor={accentColor}
+              height={28}
+              sx={{ flex: 1 }}
+            />
+          ) : (
+            <AudioSlider
+              size="small"
+              min={0}
+              step={0.1}
+              max={state.duration > 0 ? state.duration : 100}
+              value={state.currentTime}
+              bufferedEnd={state.bufferedEnd}
+              duration={state.duration}
+              onChange={handleSeekChange}
+              onChangeCommitted={handleSeekCommitted}
+              valueLabelDisplay="auto"
+              valueLabelFormat={formatTime}
+              aria-label="audio seekbar"
+            />
+          )}
           <Typography
             variant="caption"
             sx={{
@@ -429,14 +477,27 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
             Now Playing
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            {/* Visualizer Toggle */}
-            <Tooltip title={useWaveSurfer ? "Switch to Animated Wave" : "Switch to WaveSurfer Visualizer"}>
+            {/* Seekbar Mode Switcher */}
+            <Tooltip title={currentSeekbarMode === "slider" ? "Switch to Waveform Seekbar" : "Switch to Slider Seekbar"}>
               <IconButton
                 size="small"
-                onClick={() => setUseWaveSurfer(!useWaveSurfer)}
-                sx={{ color: useWaveSurfer ? "primary.main" : "text.secondary" }}
+                onClick={toggleSeekbarMode}
+                sx={{ color: currentSeekbarMode === "waveform" ? "primary.main" : "text.secondary" }}
+                aria-label="toggle seekbar mode"
               >
                 <GraphicEqRounded fontSize="small" />
+              </IconButton>
+            </Tooltip>
+
+            {/* Visualizer Mode Switcher */}
+            <Tooltip title={`Visualizer: ${currentVisualizer === "wavesurfer" ? "WaveSurfer" : currentVisualizer === "spectrum" ? "Spectrum" : currentVisualizer === "bars" ? "Bars" : "Off"} (Click to cycle)`}>
+              <IconButton
+                size="small"
+                onClick={cycleVisualizer}
+                sx={{ color: currentVisualizer !== "none" ? "primary.main" : "text.secondary" }}
+                aria-label="cycle visualizer mode"
+              >
+                <EqualizerRounded fontSize="small" />
               </IconButton>
             </Tooltip>
 
@@ -502,18 +563,28 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
                 </Typography>
               )}
 
-              {/* WaveSurfer or AudioWave rendering */}
-              {showWaveform && (
+              {/* Visualizer rendering */}
+              {currentVisualizer !== "none" && !showLyricsView && (
                 <Box sx={{ mt: 1, width: "100%" }}>
-                  {useWaveSurfer ? (
+                  {currentVisualizer === "wavesurfer" && (
                     <WaveSurferVisualizer
                       mediaElement={mediaRef.current}
                       url={src}
+                      duration={state.duration}
                       accentColor={accentColor}
-                      height={48}
+                      height={44}
                       onSeek={seek}
                     />
-                  ) : (
+                  )}
+                  {currentVisualizer === "spectrum" && (
+                    <SpectrumVisualizer
+                      mediaElement={mediaRef.current}
+                      isPlaying={state.isPlaying}
+                      accentColor={accentColor}
+                      height={44}
+                    />
+                  )}
+                  {currentVisualizer === "bars" && (
                     <Box sx={{ display: "flex", justifyContent: { xs: "center", sm: "flex-start" } }}>
                       <AudioWave isPlaying={state.isPlaying} barCount={20} accentColor={accentColor} />
                     </Box>
@@ -526,19 +597,31 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
         {/* Scrubber / Seekbar */}
         <Box sx={{ width: "100%", px: 0.5 }}>
-          <AudioSlider
-            min={0}
-            step={0.1}
-            max={state.duration > 0 ? state.duration : 100}
-            value={state.currentTime}
-            bufferedEnd={state.bufferedEnd}
-            duration={state.duration}
-            onChange={handleSeekChange}
-            onChangeCommitted={handleSeekCommitted}
-            valueLabelDisplay="auto"
-            valueLabelFormat={formatTime}
-            aria-label="audio seekbar"
-          />
+          {currentSeekbarMode === "waveform" ? (
+            <WaveformSeekbar
+              currentTime={state.currentTime}
+              duration={state.duration}
+              bufferedEnd={state.bufferedEnd}
+              onSeek={seek}
+              url={src}
+              accentColor={accentColor}
+              height={36}
+            />
+          ) : (
+            <AudioSlider
+              min={0}
+              step={0.1}
+              max={state.duration > 0 ? state.duration : 100}
+              value={state.currentTime}
+              bufferedEnd={state.bufferedEnd}
+              duration={state.duration}
+              onChange={handleSeekChange}
+              onChangeCommitted={handleSeekCommitted}
+              valueLabelDisplay="auto"
+              valueLabelFormat={formatTime}
+              aria-label="audio seekbar"
+            />
+          )}
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
             <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
               {formatTime(state.currentTime)}
@@ -724,36 +807,64 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
         </Box>
       )}
 
-      {/* WaveSurfer visualizer in card mode if enabled */}
-      {useWaveSurfer && !showLyricsView && (
+      {/* Visualizer in card mode if enabled */}
+      {currentVisualizer !== "none" && !showLyricsView && (
         <Box sx={{ my: 1, width: "100%" }}>
-          <WaveSurferVisualizer
-            mediaElement={mediaRef.current}
-            url={src}
-            accentColor={accentColor}
-            height={40}
-            onSeek={seek}
-          />
+          {currentVisualizer === "wavesurfer" && (
+            <WaveSurferVisualizer
+              mediaElement={mediaRef.current}
+              url={src}
+              duration={state.duration}
+              accentColor={accentColor}
+              height={48}
+              onSeek={seek}
+            />
+          )}
+          {currentVisualizer === "spectrum" && (
+            <SpectrumVisualizer
+              mediaElement={mediaRef.current}
+              isPlaying={state.isPlaying}
+              accentColor={accentColor}
+              height={48}
+            />
+          )}
+          {currentVisualizer === "bars" && (
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <AudioWave isPlaying={state.isPlaying} barCount={24} accentColor={accentColor} />
+            </Box>
+          )}
         </Box>
       )}
 
       {/* Seekbar and Timestamps */}
       <Box sx={{ width: "100%", px: 0.5 }}>
-        <AudioSlider
-          size="small"
-          min={0}
-          step={0.1}
-          max={state.duration > 0 ? state.duration : 100}
-          value={state.currentTime}
-          bufferedEnd={state.bufferedEnd}
-          duration={state.duration}
-          onChange={handleSeekChange}
-          onChangeCommitted={handleSeekCommitted}
-          valueLabelDisplay="auto"
-          valueLabelFormat={formatTime}
-          aria-label="audio seekbar"
-        />
-        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+        {currentSeekbarMode === "waveform" ? (
+          <WaveformSeekbar
+            currentTime={state.currentTime}
+            duration={state.duration}
+            bufferedEnd={state.bufferedEnd}
+            onSeek={seek}
+            url={src}
+            accentColor={accentColor}
+            height={36}
+          />
+        ) : (
+          <AudioSlider
+            size="small"
+            min={0}
+            step={0.1}
+            max={state.duration > 0 ? state.duration : 100}
+            value={state.currentTime}
+            bufferedEnd={state.bufferedEnd}
+            duration={state.duration}
+            onChange={handleSeekChange}
+            onChangeCommitted={handleSeekCommitted}
+            valueLabelDisplay="auto"
+            valueLabelFormat={formatTime}
+            aria-label="audio seekbar"
+          />
+        )}
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.5 }}>
           <Typography variant="caption" sx={{ color: "text.secondary", fontVariantNumeric: "tabular-nums" }}>
             {formatTime(state.currentTime)}
           </Typography>
@@ -880,14 +991,27 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({
 
         {/* Actions */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          {/* WaveSurfer Toggle */}
-          <Tooltip title={useWaveSurfer ? "Hide Waveform" : "Show WaveSurfer Visualizer"}>
+          {/* Seekbar Mode Switcher */}
+          <Tooltip title={currentSeekbarMode === "slider" ? "Switch to Waveform Seekbar" : "Switch to Slider Seekbar"}>
             <IconButton
               size="small"
-              onClick={() => setUseWaveSurfer(!useWaveSurfer)}
-              sx={{ color: useWaveSurfer ? "primary.main" : "text.secondary" }}
+              onClick={toggleSeekbarMode}
+              sx={{ color: currentSeekbarMode === "waveform" ? "primary.main" : "text.secondary" }}
+              aria-label="toggle seekbar mode"
             >
               <GraphicEqRounded fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {/* Visualizer Mode Switcher */}
+          <Tooltip title={`Visualizer: ${currentVisualizer === "wavesurfer" ? "WaveSurfer" : currentVisualizer === "spectrum" ? "Spectrum" : currentVisualizer === "bars" ? "Bars" : "Off"} (Click to cycle)`}>
+            <IconButton
+              size="small"
+              onClick={cycleVisualizer}
+              sx={{ color: currentVisualizer !== "none" ? "primary.main" : "text.secondary" }}
+              aria-label="cycle visualizer mode"
+            >
+              <EqualizerRounded fontSize="small" />
             </IconButton>
           </Tooltip>
 

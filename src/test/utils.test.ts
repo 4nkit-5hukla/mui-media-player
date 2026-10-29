@@ -20,6 +20,7 @@ import {
   findActiveSubtitleCue,
 } from "../utils/vttParser";
 import { parseID3FromBuffer } from "../utils/id3Parser";
+import { generateDeterministicPeaks } from "../utils/wavePeaks";
 
 describe("formatTime", () => {
   it("formats seconds under one minute", () => {
@@ -238,5 +239,27 @@ describe("id3Parser", () => {
 
     const parsed = parseID3FromBuffer(buffer);
     expect(parsed.title).toBe("Test");
+  });
+});
+
+describe("generateDeterministicPeaks", () => {
+  it("generates correct number of peaks", () => {
+    const peaks = generateDeterministicPeaks("test-seed", 50);
+    expect(peaks).toHaveLength(50);
+    peaks.forEach((p) => {
+      expect(p).toBeGreaterThanOrEqual(0.1);
+      expect(p).toBeLessThanOrEqual(1.0);
+    });
+  });
+
+  it("produces deterministic output for the same seed", () => {
+    const peaks1 = generateDeterministicPeaks("my-audio-track", 64);
+    const peaks2 = generateDeterministicPeaks("my-audio-track", 64);
+    expect(peaks1).toEqual(peaks2);
+  });
+
+  it("handles numeric seeds and default counts", () => {
+    const peaks = generateDeterministicPeaks(180);
+    expect(peaks.length).toBeGreaterThan(0);
   });
 });

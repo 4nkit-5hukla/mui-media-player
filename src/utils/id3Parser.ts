@@ -8,20 +8,21 @@ import { ID3Metadata, LyricLine } from "../types/tracks";
  * 3: UTF-8
  */
 function decodeText(bytes: Uint8Array, encodingByte: number): string {
+  let str = "";
   try {
     if (encodingByte === 3) {
-      return new TextDecoder("utf-8").decode(bytes);
+      str = new TextDecoder("utf-8").decode(bytes);
     } else if (encodingByte === 1) {
-      return new TextDecoder("utf-16").decode(bytes);
+      str = new TextDecoder("utf-16").decode(bytes);
     } else if (encodingByte === 2) {
-      return new TextDecoder("utf-16be").decode(bytes);
+      str = new TextDecoder("utf-16be").decode(bytes);
     } else {
-      return new TextDecoder("iso-8859-1").decode(bytes);
+      str = new TextDecoder("iso-8859-1").decode(bytes);
     }
   } catch {
-    // Fallback if encoding unsupported
-    return new TextDecoder("utf-8").decode(bytes);
+    str = new TextDecoder("utf-8").decode(bytes);
   }
+  return str.replace(/\0/g, "").trim();
 }
 
 /**

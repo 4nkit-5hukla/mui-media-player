@@ -20,7 +20,9 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
     lyrics: directLyrics,
     aspectRatio,
     audioVariant,
-    showWaveform,
+    showWaveform = true,
+    visualizer = "wavesurfer",
+    seekbarMode = "slider",
     playlist: directPlaylist,
     ...restProps
   } = props;
@@ -54,6 +56,8 @@ export const MediaPlayer: FC<MediaPlayerProps> = (props) => {
         lyrics={activeLyrics}
         variant={audioVariant}
         showWaveform={showWaveform}
+        visualizer={visualizer}
+        seekbarMode={seekbarMode}
         playlist={directPlaylist}
         {...restProps}
       />
