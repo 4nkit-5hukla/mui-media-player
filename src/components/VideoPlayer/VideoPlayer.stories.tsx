@@ -6,9 +6,9 @@ import { VideoPlayer } from './VideoPlayer'
 import { SAMPLE_SUBTITLES, SAMPLE_AUDIO_TRACKS } from '../../demo/sampleData'
 
 const sampleVideoUrl =
-  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+  'https://filesamples.com/samples/video/mp4/sample_1280x720_surfing_with_audio.mp4'
 const samplePoster =
-  'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=80'
+  'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1200&q=80'
 
 const meta: Meta<typeof VideoPlayer> = {
   title: 'Components/VideoPlayer',
@@ -64,8 +64,8 @@ type Story = StoryObj<typeof VideoPlayer>
 export const Default: Story = {
   args: {
     src: sampleVideoUrl,
-    title: 'Big Buck Bunny (Blender Open Project)',
-    subtitle: 'Ultra-HD Animation Reel',
+    title: 'Surfing Adventure (720p HD)',
+    subtitle: 'Action Sports Series',
     poster: samplePoster,
     aspectRatio: '16/9',
     accentColor: 'primary'
@@ -80,7 +80,7 @@ export const Default: Story = {
 export const SubtitlesAndMultiAudioTracks: Story = {
   args: {
     src: sampleVideoUrl,
-    title: 'Video with Subtitles & Multi-Audio Tracks',
+    title: 'Surfing with Subtitles & Multi-Audio Tracks',
     subtitle: 'Switch languages (English / Spanish / French) & Audio commentary in bottom bar',
     poster: samplePoster,
     aspectRatio: '16/9',
@@ -97,8 +97,8 @@ export const SubtitlesAndMultiAudioTracks: Story = {
 
 export const YouTubeEmbed: Story = {
   args: {
-    src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
-    title: 'Big Buck Bunny (YouTube Stream)',
+    src: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    title: 'Never Gonna Give You Up (YouTube Stream)',
     subtitle: 'Embedded via smart YouTube fallback detection',
     aspectRatio: '16/9',
     accentColor: 'secondary'
@@ -156,11 +156,12 @@ export const CompactRatio: Story = {
     src: sampleVideoUrl,
     title: 'Square Format (1:1 Ratio)',
     subtitle: 'Optimized for social feeds and cards',
+    poster: samplePoster,
     aspectRatio: '1/1',
     accentColor: 'primary'
   },
   render: (args) => (
-    <Box sx={{ maxWidth: 420, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 500, mx: 'auto' }}>
       <VideoPlayer {...args} />
     </Box>
   )

@@ -4,9 +4,9 @@ import { AudioPlayer } from './AudioPlayer'
 import { SAMPLE_LYRICS } from '../../demo/sampleData'
 
 const sampleAudioUrl =
-  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+  'https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/master/sample.mp3'
 const sampleArtwork =
-  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80'
+  'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=600&q=80'
 
 const meta: Meta<typeof AudioPlayer> = {
   title: 'Components/AudioPlayer',
@@ -16,7 +16,7 @@ const meta: Meta<typeof AudioPlayer> = {
     docs: {
       description: {
         component:
-          'A modern MUI-based audio player with three distinct layout variants (`card`, `compact`, `full`), real-time synchronized karaoke lyrics with click-to-seek and live transcribing editor, ID3 tag auto-extraction for embedded artwork/lyrics, and interactive WaveSurfer.js waveform visualizer.'
+          'A modern MUI-based audio player with three distinct layout variants (`card`, `compact`, `full`), real-time synchronized karaoke lyrics with click-to-seek and live transcribing editor, ID3 tag auto-extraction for embedded artwork/lyrics, interchangeable seekbars (`slider` or `waveform`), and multiple audio visualizer modes (`wavesurfer`, `spectrum`, `bars`, `none`).'
       }
     }
   },
@@ -25,6 +25,16 @@ const meta: Meta<typeof AudioPlayer> = {
       control: 'select',
       options: ['card', 'compact', 'full'],
       description: 'Layout variant of audio player'
+    },
+    visualizer: {
+      control: 'select',
+      options: ['wavesurfer', 'spectrum', 'bars', 'none'],
+      description: 'Audio visualizer rendering mode'
+    },
+    seekbarMode: {
+      control: 'select',
+      options: ['slider', 'waveform'],
+      description: 'Seekbar scrubber style (MUI Slider or WaveData canvas)'
     },
     src: { control: 'text' },
     title: { control: 'text' },
@@ -51,11 +61,13 @@ export const CardVariant: Story = {
   args: {
     variant: 'card',
     src: sampleAudioUrl,
-    title: 'Acoustic Horizon',
-    artist: 'SoundHelix Collective',
-    album: 'Deep Focus Chillout',
+    title: 'Blizzard (Chapter One)',
+    artist: 'Kai Engel',
+    album: 'Chapter One / Cold',
     artwork: sampleArtwork,
     accentColor: 'primary',
+    visualizer: 'wavesurfer',
+    seekbarMode: 'waveform',
     showWaveform: true
   },
   render: (args) => (
@@ -65,14 +77,52 @@ export const CardVariant: Story = {
   )
 }
 
+export const WaveformSeekbarMode: Story = {
+  args: {
+    variant: 'card',
+    src: sampleAudioUrl,
+    title: 'Waveform Seekbar Demo',
+    artist: 'Interactive Scrubber',
+    album: 'Precision Navigation',
+    artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
+    seekbarMode: 'waveform',
+    visualizer: 'none',
+    accentColor: 'secondary'
+  },
+  render: (args) => (
+    <Box sx={{ maxWidth: 480, mx: 'auto' }}>
+      <AudioPlayer {...args} />
+    </Box>
+  )
+}
+
+export const SpectrumVisualizerMode: Story = {
+  args: {
+    variant: 'card',
+    src: sampleAudioUrl,
+    title: 'Graphic Spectrum Analyzer',
+    artist: 'Dynamic Frequency Bars',
+    album: 'Peak Hold Physics',
+    artwork: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=600&q=80',
+    visualizer: 'spectrum',
+    seekbarMode: 'slider',
+    accentColor: 'primary'
+  },
+  render: (args) => (
+    <Box sx={{ maxWidth: 480, mx: 'auto' }}>
+      <AudioPlayer {...args} />
+    </Box>
+  )
+}
+
 export const SynchronizedLyricsAndEditor: Story = {
   args: {
     variant: 'card',
     src: sampleAudioUrl,
-    title: 'Midnight Resonance',
-    artist: 'Aura Soundscape',
-    album: 'Nocturne Horizons',
-    artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=600&q=80',
+    title: 'Blizzard (Karaoke Lyrics)',
+    artist: 'Kai Engel',
+    album: 'Chapter One / Cold',
+    artwork: sampleArtwork,
     lyrics: SAMPLE_LYRICS,
     accentColor: 'primary',
     showWaveform: true,
@@ -88,11 +138,12 @@ export const WaveSurferAudioVisualizer: Story = {
   args: {
     variant: 'full',
     src: sampleAudioUrl,
-    title: 'Neon Odyssey (WaveSurfer Visualizer)',
-    artist: 'Cyber Echo',
+    title: 'WaveSurfer Canvas Visualizer',
+    artist: 'Kai Engel',
     album: 'Deep Space Frequencies',
     artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-    enableWaveSurfer: true,
+    visualizer: 'wavesurfer',
+    seekbarMode: 'waveform',
     lyrics: SAMPLE_LYRICS,
     accentColor: 'secondary',
   },
@@ -110,6 +161,8 @@ export const CompactVariant: Story = {
     title: 'Podcast Episode 42: Modern React Architecture',
     artist: 'Engineering Insights',
     artwork: sampleArtwork,
+    visualizer: 'wavesurfer',
+    seekbarMode: 'slider',
     accentColor: 'secondary'
   },
   render: (args) => (
@@ -123,11 +176,13 @@ export const FullHeroVariant: Story = {
   args: {
     variant: 'full',
     src: sampleAudioUrl,
-    title: 'Midnight Synthwave Journey',
-    artist: 'Cybernetic Echoes',
-    album: 'Neon Skyline (Deluxe Edition)',
+    title: 'Blizzard (Full Hero)',
+    artist: 'Kai Engel',
+    album: 'Chapter One / Cold',
     artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
     accentColor: 'secondary',
+    visualizer: 'wavesurfer',
+    seekbarMode: 'waveform',
     showWaveform: true
   },
   render: (args) => (
@@ -141,13 +196,15 @@ export const AllVariantsShowcase: Story = {
   render: () => (
     <Stack spacing={4} sx={{ maxWidth: 860, mx: 'auto' }}>
       <Box>
-        <h3>Card Variant</h3>
+        <h3>Card Variant (WaveData Seekbar)</h3>
         <AudioPlayer
           variant="card"
           src={sampleAudioUrl}
           title="Ambient Sunlight"
           artist="Solar Frequencies"
           artwork={sampleArtwork}
+          seekbarMode="waveform"
+          visualizer="wavesurfer"
           accentColor="primary"
         />
       </Box>
@@ -160,6 +217,7 @@ export const AllVariantsShowcase: Story = {
           title="Daily Tech Roundup: The Future of UI"
           artist="Daily Briefing"
           artwork={sampleArtwork}
+          visualizer="spectrum"
           accentColor="secondary"
         />
       </Box>
@@ -174,6 +232,7 @@ export const AllVariantsShowcase: Story = {
           album="Masterpieces of Classical Music"
           artwork="https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=800&q=80"
           accentColor="primary"
+          visualizer="wavesurfer"
           showWaveform={true}
         />
       </Box>

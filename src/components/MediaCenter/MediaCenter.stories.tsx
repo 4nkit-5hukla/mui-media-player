@@ -3,39 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { Box, Button } from '@mui/material'
 import PlayCircleFilledWhiteIcon from '@mui/icons-material/PlayCircleFilledWhite'
 import { MediaCenter } from './MediaCenter'
-import { PlaylistItem } from '../../types/playlist'
-
-const samplePlaylist: PlaylistItem[] = [
-  {
-    id: 'vid-1',
-    src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    type: 'video',
-    title: 'Big Buck Bunny',
-    artist: 'Blender Foundation',
-    artwork: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=600&q=80',
-    duration: 596
-  },
-  {
-    id: 'aud-1',
-    src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    type: 'audio',
-    title: 'SoundHelix Ambient Flow',
-    artist: 'SoundHelix Acoustic',
-    album: 'Serenity Vol. 1',
-    artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
-    duration: 372
-  },
-  {
-    id: 'aud-2',
-    src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-    type: 'audio',
-    title: 'Electronic Pulse',
-    artist: 'Digital Odyssey',
-    album: 'Future Beats',
-    artwork: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80',
-    duration: 420
-  }
-]
+import { SAMPLE_PLAYLIST } from '../../demo/sampleData'
 
 const meta: Meta<typeof MediaCenter> = {
   title: 'Components/MediaCenter',
@@ -58,7 +26,7 @@ const meta: Meta<typeof MediaCenter> = {
     title: { control: 'text' },
     accentColor: {
       control: 'select',
-      options: ['primary', 'secondary', 'success', 'warning', 'error', 'info']
+      options: ['primary', 'secondary', 'success', 'warning', 'error', 'info', '#6366f1']
     }
   }
 }
@@ -69,12 +37,12 @@ type Story = StoryObj<typeof MediaCenter>
 export const EmbeddedWorkstation: Story = {
   args: {
     mode: 'embedded',
-    title: 'Production Media Studio',
-    playlist: samplePlaylist,
+    title: 'Studio Media Hub',
+    playlist: SAMPLE_PLAYLIST,
     accentColor: 'primary'
   },
   render: (args) => (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', height: 700 }}>
+    <Box sx={{ width: '100%', height: 600 }}>
       <MediaCenter {...args} />
     </Box>
   )
@@ -85,14 +53,14 @@ export const ModalLightbox: Story = {
     const [open, setOpen] = useState(false)
 
     return (
-      <Box sx={{ textAlign: 'center', py: 8 }}>
+      <Box sx={{ p: 4, textAlign: 'center' }}>
         <Button
           variant="contained"
           size="large"
           color="primary"
           startIcon={<PlayCircleFilledWhiteIcon />}
           onClick={() => setOpen(true)}
-          sx={{ borderRadius: 3, px: 4, py: 1.5, textTransform: 'none', fontWeight: 600 }}
+          sx={{ textTransform: 'none', px: 4, py: 1.5, borderRadius: 3, fontWeight: 700 }}
         >
           Open Media Center Lightbox
         </Button>
@@ -101,9 +69,9 @@ export const ModalLightbox: Story = {
           mode="modal"
           open={open}
           onClose={() => setOpen(false)}
-          title="Media Center Hub"
-          playlist={samplePlaylist}
-          accentColor="secondary"
+          title="Media Library & Player"
+          playlist={SAMPLE_PLAYLIST}
+          accentColor="primary"
         />
       </Box>
     )

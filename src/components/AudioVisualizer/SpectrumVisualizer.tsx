@@ -3,7 +3,7 @@ import { Box, useTheme, SxProps, Theme } from "@mui/material";
 import { resolveAccentColor } from "../../utils/theme";
 
 export interface SpectrumVisualizerProps {
-  /** Target audio media element to analyze */
+  /** Target audio media element (optional reference) */
   mediaElement?: HTMLMediaElement | null;
   /** Whether the audio is currently playing */
   isPlaying?: boolean;
@@ -20,12 +20,12 @@ export interface SpectrumVisualizerProps {
 }
 
 export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
-  mediaElement,
+  mediaElement: _mediaElement,
   isPlaying = false,
   accentColor = "primary",
   height = 64,
   barCount = 32,
-  mode = "bars",
+  mode: _mode = "bars",
   sx,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -45,33 +45,6 @@ export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
     if (!canvas || !container) return;
 
     let isDestroyed = false;
-
-    // Web Audio API setup if possible
-    let audioCtx: AudioContext | null = null;
-    let analyser: AnalyserNode | null = null;
-    let dataArray: Uint8Array<ArrayBuffer> | null = null;
-
-    try {
-      if (mediaElement && typeof window !== "undefined" && window.AudioContext) {
-        // Attempt to connect Web Audio analyzer if element not already hooked
-        const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        audioCtx = new AudioContextClass();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 128;
-        analyser.smoothingTimeConstant = 0.8;
-        dataArray = new Uint8Array(new ArrayBuffer(analyser.frequencyBinCount));
-
-        try {
-          const source = audioCtx.createMediaElementSource(mediaElement);
-          source.connect(analyser);
-          analyser.connect(audioCtx.destination);
-        } catch {
-          // Often throws if mediaElement is already connected by another node
-        }
-      }
-    } catch {
-      // Graceful fallback to synthetic spectrum
-    }
 
     const renderFrame = () => {
       if (isDestroyed) return;
@@ -94,18 +67,6 @@ export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, width, height);
 
-      let hasRealAudioData = false;
-      if (analyser && dataArray && isPlaying) {
-        try {
-          analyser.getByteFrequencyData(dataArray);
-          // Check if we got non-zero values (CORS permits)
-          const sum = dataArray.reduce((acc, v) => acc + v, 0);
-          if (sum > 0) hasRealAudioData = true;
-        } catch {
-          hasRealAudioData = false;
-        }
-      }
-
       phaseRef.current += 0.08;
       const phase = phaseRef.current;
 
@@ -124,19 +85,14 @@ export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
         let targetHeight = 4;
 
         if (isPlaying) {
-          if (hasRealAudioData && dataArray) {
-            const freqIndex = Math.floor((i / barCount) * (dataArray.length / 2));
-            const val = dataArray[freqIndex] || 0;
-            targetHeight = Math.max(4, (val / 255) * (height - 8));
-          } else {
-            // Synthetic music-like equalizer physics
-            const wave1 = Math.sin(phase + i * 0.3) * 0.4 + 0.5;
-            const wave2 = Math.cos(phase * 1.5 + i * 0.5) * 0.3 + 0.3;
-            const beat = Math.sin(phase * 2) > 0.7 ? 0.3 : 0;
-            const curve = 1 - Math.pow(Math.abs(i - barCount * 0.35) / (barCount * 0.7), 2);
-            const intensity = Math.max(0.1, (wave1 * 0.5 + wave2 * 0.5 + beat) * Math.max(0.3, curve));
-            targetHeight = Math.max(4, intensity * (height - 8));
-          }
+          // Dynamic music spectrum physics simulation with harmonic distribution
+          const wave1 = Math.sin(phase + i * 0.28) * 0.38 + 0.48;
+          const wave2 = Math.cos(phase * 1.6 + i * 0.45) * 0.28 + 0.32;
+          const beat = Math.sin(phase * 2.2) > 0.68 ? 0.32 : 0;
+          // Natural audio curve (punchy bass, lively mids, tapered highs)
+          const curve = 1 - Math.pow(Math.abs(i - barCount * 0.3) / (barCount * 0.72), 2);
+          const intensity = Math.max(0.12, (wave1 * 0.5 + wave2 * 0.5 + beat) * Math.max(0.35, curve));
+          targetHeight = Math.max(4, intensity * (height - 8));
         } else {
           targetHeight = 4;
         }
@@ -145,18 +101,18 @@ export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
         barHeightsRef.current[i] = (barHeightsRef.current[i] || 4) * 0.75 + targetHeight * 0.25;
         const currentBarH = barHeightsRef.current[i];
 
-        // Falling peak caps
+        // Falling peak caps with gravity decay
         if (currentBarH >= (peakCapsRef.current[i] || 4)) {
           peakCapsRef.current[i] = currentBarH;
         } else {
-          peakCapsRef.current[i] = Math.max(4, (peakCapsRef.current[i] || 4) - 0.8);
+          peakCapsRef.current[i] = Math.max(4, (peakCapsRef.current[i] || 4) - 0.75);
         }
         const capH = peakCapsRef.current[i];
 
         const x = barSpacing + i * (barWidth + barSpacing);
         const y = height - currentBarH;
 
-        // Draw bar
+        // Draw spectrum bar
         ctx.fillStyle = gradient;
         ctx.beginPath();
         if (ctx.roundRect) {
@@ -186,15 +142,8 @@ export const SpectrumVisualizer: React.FC<SpectrumVisualizerProps> = ({
       if (animFrameRef.current) {
         cancelAnimationFrame(animFrameRef.current);
       }
-      try {
-        if (audioCtx && audioCtx.state !== "closed") {
-          audioCtx.close();
-        }
-      } catch {
-        // Ignored
-      }
     };
-  }, [mediaElement, isPlaying, resolvedAccent, height, barCount, mode, theme]);
+  }, [isPlaying, resolvedAccent, height, barCount, theme]);
 
   return (
     <Box

@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import { Box } from '@mui/material'
 import { MediaPlayer } from './MediaPlayer'
+import { SAMPLE_SUBTITLES, SAMPLE_AUDIO_TRACKS, SAMPLE_LYRICS } from '../../demo/sampleData'
 
 const meta: Meta<typeof MediaPlayer> = {
   title: 'Components/MediaPlayer',
@@ -20,6 +21,14 @@ const meta: Meta<typeof MediaPlayer> = {
       control: 'select',
       options: ['auto', 'video', 'audio', 'youtube']
     },
+    visualizer: {
+      control: 'select',
+      options: ['wavesurfer', 'spectrum', 'bars', 'none']
+    },
+    seekbarMode: {
+      control: 'select',
+      options: ['slider', 'waveform']
+    },
     title: { control: 'text' },
     artist: { control: 'text' },
     accentColor: {
@@ -35,11 +44,14 @@ type Story = StoryObj<typeof MediaPlayer>
 export const AutoDetectVideo: Story = {
   args: {
     type: 'auto',
-    src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    title: 'Auto-Detected Video Stream (.mp4)',
-    poster: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=80',
+    src: 'https://filesamples.com/samples/video/mp4/sample_1280x720_surfing_with_audio.mp4',
+    title: 'Surfing Adventure 720p HD (.mp4)',
+    subtitle: 'Action Sports Series',
+    poster: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1200&q=80',
     aspectRatio: '16/9',
-    accentColor: 'primary'
+    accentColor: 'primary',
+    subtitles: SAMPLE_SUBTITLES,
+    audioTracks: SAMPLE_AUDIO_TRACKS,
   },
   render: (args) => (
     <Box sx={{ maxWidth: 860, mx: 'auto' }}>
@@ -51,12 +63,16 @@ export const AutoDetectVideo: Story = {
 export const AutoDetectAudio: Story = {
   args: {
     type: 'auto',
-    src: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-    title: 'Auto-Detected Audio Track (.mp3)',
-    artist: 'SoundHelix Acoustic',
-    artwork: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80',
+    src: 'https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/master/sample.mp3',
+    title: 'Blizzard (Auto-Detected MP3)',
+    artist: 'Kai Engel',
+    album: 'Chapter One / Cold',
+    artwork: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?auto=format&fit=crop&w=600&q=80',
+    lyrics: SAMPLE_LYRICS,
     audioVariant: 'card',
-    accentColor: 'secondary'
+    visualizer: 'wavesurfer',
+    seekbarMode: 'waveform',
+    accentColor: 'primary'
   },
   render: (args) => (
     <Box sx={{ maxWidth: 460, mx: 'auto' }}>
@@ -68,10 +84,10 @@ export const AutoDetectAudio: Story = {
 export const AutoDetectYouTube: Story = {
   args: {
     type: 'auto',
-    src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
-    title: 'Auto-Detected YouTube Video',
+    src: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    title: 'Never Gonna Give You Up (Auto-Detected YouTube)',
     aspectRatio: '16/9',
-    accentColor: 'primary'
+    accentColor: 'secondary'
   },
   render: (args) => (
     <Box sx={{ maxWidth: 860, mx: 'auto' }}>

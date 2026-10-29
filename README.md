@@ -24,7 +24,8 @@
   - **ID3 Tag Auto-Extraction**: Automatically extracts embedded album artwork (APIC) and lyrics (USLT/SYLT) from audio files or remote URLs using zero-dependency HTTP range requests.
   - **Synchronized Lyrics (Karaoke Mode)**: Real-time active lyric highlighting with smooth auto-scroll to the current singing line and click-to-seek functionality.
   - **Lyrics Synchronization & Transcribe Studio**: Interactive editor allowing users to inject plain lyrics, paste LRC text, or stamp timestamps in real-time as the audio plays.
-  - **WaveSurfer.js Audio Visualizer**: Interactive canvas waveform visualization with scrubbing and theme integration.
+  - **WaveSurfer.js Audio Visualizer & Spectrum Analyzer**: Interactive canvas waveform visualization with scrubbing, real-time frequency spectrum analyzer, and theme integration.
+  - **Interchangeable Seekbar Scrubber**: Switch between standard MUI Slider and waveform-driven WaveData seeker.
   - **3 Visual Variants**: `card` (default modern music card), `compact` (inline bar for comments/articles), and `full` (large hero music hub).
 - 🪄 **MediaPlayer (Universal Smart Detector)**: Pass any media URL or playlist track. `MediaPlayer` automatically detects the media type (`video`, `audio`, or `youtube`) and mounts the appropriate player with unified props.
 - 📻 **MediaBar**: Persistent docked or floating bottom playback bar (similar to Spotify and Apple Music) with top-edge scrubber, volume slider, track metadata, queue drawer, and player expansion.
@@ -60,10 +61,10 @@ import { VideoPlayer } from "mui-media-player";
 export default function VideoDemo() {
   return (
     <VideoPlayer
-      src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-      title="Big Buck Bunny"
-      subtitle="Blender Foundation • 4K Open Movie"
-      poster="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d"
+      src="https://filesamples.com/samples/video/mp4/sample_1280x720_surfing_with_audio.mp4"
+      title="Surfing Adventure (720p HD)"
+      subtitle="Action Sports Series"
+      poster="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1200&q=80"
       aspectRatio="16/9"
       subtitles={[
         {
@@ -72,8 +73,8 @@ export default function VideoDemo() {
           language: "en",
           default: true,
           cues: [
-            { start: 0.5, end: 3.5, text: "A large, fluffy rabbit awakens." },
-            { start: 3.8, end: 6.5, text: "Birds are chirping in the morning breeze." },
+            { start: 0.5, end: 3.5, text: "A surfer takes off on an open ocean wave." },
+            { start: 3.8, end: 6.5, text: "Carving through the barrel with effortless style." },
           ],
         },
         {
@@ -81,13 +82,13 @@ export default function VideoDemo() {
           label: "Español",
           language: "es",
           cues: [
-            { start: 0.5, end: 3.5, text: "Un conejo grande y esponjoso se despierta." },
+            { start: 0.5, end: 3.5, text: "Un surfista despega sobre una ola del océano." },
           ],
         },
       ]}
       audioTracks={[
-        { id: "main", label: "English (5.1 Surround)", default: true },
-        { id: "commentary", label: "Director's Commentary", kind: "commentary" },
+        { id: "main", label: "Stereo Master (English)", default: true },
+        { id: "commentary", label: "Surfing Coach Commentary", kind: "commentary" },
       ]}
     />
   );
@@ -101,11 +102,13 @@ import { AudioPlayer } from "mui-media-player";
 export default function AudioDemo() {
   return (
     <AudioPlayer
-      src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-      title="Midnight Resonance"
-      artist="Aura Soundscape"
-      album="Nocturne Horizons"
+      src="https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/master/sample.mp3"
+      title="Blizzard (Chapter One)"
+      artist="Kai Engel"
+      album="Chapter One / Cold"
       variant="card" // 'card' | 'compact' | 'full'
+      visualizer="wavesurfer" // 'wavesurfer' | 'spectrum' | 'bars' | 'none'
+      seekbarMode="waveform"  // 'slider' | 'waveform'
       enableWaveSurfer={true} // Interactive WaveSurfer canvas visualizer
       autoExtractID3={true}   // Auto-extracts embedded album art and lyrics from ID3 tags
       lyrics={`
@@ -126,11 +129,11 @@ import { MediaPlayer } from "mui-media-player";
 export default function UniversalMediaDemo() {
   return (
     <>
-      {/* Renders AudioPlayer */}
-      <MediaPlayer src="https://example.com/podcast.mp3" title="Tech Talk EP. 42" />
+      {/* Renders AudioPlayer with WaveSurfer & Waveform seekbar */}
+      <MediaPlayer src="https://raw.githubusercontent.com/rafaelreis-hotmart/Audio-Sample-files/master/sample.mp3" title="Tech Talk EP. 42" />
 
       {/* Renders VideoPlayer */}
-      <MediaPlayer src="https://example.com/demo.mp4" title="Product Showcase" />
+      <MediaPlayer src="https://filesamples.com/samples/video/mp4/sample_1280x720_surfing_with_audio.mp4" title="Surfing Adventure" />
 
       {/* Renders YouTube Video Embed */}
       <MediaPlayer src="https://www.youtube.com/watch?v=dQw4w9WgXcQ" title="Rick Astley" />
